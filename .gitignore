@@ -1,0 +1,226 @@
+# ═══════════════════════════════════════════════════════════
+#  AI Event Attendance Prediction System — .gitignore
+#  Tech Stack: Angular 17 · ASP.NET Core 8 · FastAPI · SQL Server
+# ═══════════════════════════════════════════════════════════
+ 
+ 
+# ───────────────────────────────────────────────────────────
+#  ASP.NET Core / .NET (api/)
+# ───────────────────────────────────────────────────────────
+ 
+# Build output
+api/src/bin/
+api/src/obj/
+api/tests/bin/
+api/tests/obj/
+ 
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+ 
+# Visual Studio
+.vs/
+*.ncb
+*.sap
+ 
+# Rider / JetBrains
+.idea/
+*.DotSettings.user
+ 
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+ 
+# Entity Framework migrations (keep source, ignore snapshots if regenerating)
+# Uncomment the line below ONLY if you want to ignore migration files
+# api/src/Migrations/
+ 
+# Sensitive config — NEVER commit development secrets
+api/src/appsettings.Development.json
+api/src/appsettings.Production.json
+ 
+# Publish output
+api/src/publish/
+api/src/out/
+ 
+ 
+# ───────────────────────────────────────────────────────────
+#  Angular / Node.js (ui/)
+# ───────────────────────────────────────────────────────────
+ 
+# Dependencies — always regenerated via npm install
+ui/node_modules/
+ 
+# Angular build output
+ui/dist/
+ui/.angular/
+ui/.angular/cache/
+ 
+# Angular CLI temp files
+ui/*.js.map
+ 
+# Environment files with secrets (keep environment.ts, ignore prod)
+ui/src/environments/environment.prod.ts
+ 
+# npm / yarn
+ui/npm-debug.log*
+ui/yarn-debug.log*
+ui/yarn-error.log*
+ui/.pnp
+ui/.pnp.js
+ 
+# Testing coverage
+ui/coverage/
+ 
+ 
+# ───────────────────────────────────────────────────────────
+#  Python / FastAPI (tools/)
+# ───────────────────────────────────────────────────────────
+ 
+# Virtual environments
+tools/venv/
+tools/.venv/
+tools/env/
+tools/.env/
+ 
+# Python cache
+tools/__pycache__/
+tools/**/__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+ 
+
+
+# pip
+tools/pip-log.txt
+tools/pip-delete-this-directory.txt
+ 
+# Jupyter notebooks (if used for exploration)
+tools/.ipynb_checkpoints/
+tools/*.ipynb
+ 
+# mypy / pyright type checking
+tools/.mypy_cache/
+tools/.pytype/
+ 
+ 
+# ───────────────────────────────────────────────────────────
+#  SQL Server / Database
+# ───────────────────────────────────────────────────────────
+ 
+# LocalDB files (auto-created by SQL Server LocalDB)
+*.mdf
+*.ldf
+*.ndf
+ 
+# SSMS settings
+*.sql.settings
+ 
+ 
+# ───────────────────────────────────────────────────────────
+#  Secrets and Environment Variables
+# ───────────────────────────────────────────────────────────
+ 
+# .env files — NEVER commit secrets
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+*.env
+ 
+# JWT signing keys or any key files
+*.key
+*.pem
+*.pfx
+*.p12
+secrets.json
+ 
+ 
+# ───────────────────────────────────────────────────────────
+#  Operating System
+# ───────────────────────────────────────────────────────────
+ 
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ 
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+ 
+# Linux
+*~
+.directory
+ 
+ 
+# ───────────────────────────────────────────────────────────
+#  Editors and IDEs
+# ───────────────────────────────────────────────────────────
+ 
+# Visual Studio Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+ 
+# Rider / IntelliJ
+.idea/
+*.iml
+*.iws
+ 
+# Vim / Emacs
+*.swp
+*.swo
+*.swn
+*~
+\#*\#
+ 
+ 
+# ───────────────────────────────────────────────────────────
+#  Logs and Temporary Files
+# ───────────────────────────────────────────────────────────
+ 
+*.log
+*.log.*
+logs/
+log/
+temp/
+tmp/
+.temp/
+.tmp/
+ 
+ 
+# ───────────────────────────────────────────────────────────
+#  Build and CI/CD artifacts
+# ───────────────────────────────────────────────────────────
+ 
+# Docker (if used later)
+.dockerignore
+ 
+# GitHub Actions cache
+.github/cache/
+ 
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
