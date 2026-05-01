@@ -1,0 +1,189 @@
+<div class="auth-root">
+
+  <!-- LEFT PANEL -->
+  <div class="auth-left">
+    <canvas #bgCanvas class="bg-canvas"></canvas>
+    <div class="al-orb al-orb-1"></div>
+    <div class="al-orb al-orb-2"></div>
+
+    <div class="al-content">
+      <div class="al-brand">
+        <div class="brand-icon-box">⬡</div>
+        <span class="brand-name">EventAI</span>
+      </div>
+
+      <div class="al-hero">
+        <div class="al-eyebrow">
+          <span class="eyebrow-dot"></span> Get started for free
+        </div>
+        <h2 class="al-title">Join thousands of event teams using AI</h2>
+        <p class="al-sub">From your first event to your hundredth — EventAI scales with you.</p>
+      </div>
+
+      <!-- Journey steps -->
+      <div class="al-journey">
+        @for (s of steps; track s.label; let i = $index) {
+          <div class="journey-step">
+            <div class="js-num">{{ s.icon }}</div>
+            @if (i < steps.length - 1) {
+              <div class="js-line"></div>
+            }
+            <div class="js-label">{{ s.label }}</div>
+          </div>
+        }
+      </div>
+
+      <div class="al-cta-note">
+        Already have an account?
+        <a routerLink="/login" class="al-signin-link">Log in →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="auth-right">
+    <div class="ar-card animate-in">
+
+      <div class="ar-header">
+        <div class="ar-logo">
+          <div class="brand-icon-box sm">⬡</div>
+          <span class="brand-name">EventAI</span>
+        </div>
+        <div class="ar-badge">
+          <span class="ar-badge-dot"></span> Free account
+        </div>
+      </div>
+
+      <h1 class="ar-title">Create your account</h1>
+      <p class="ar-sub">Start predicting attendance with AI today</p>
+
+      <!-- General error -->
+      @if (error) {
+        <div class="auth-error-box">
+          <div class="aeb-icon">⚠</div>
+          <div class="aeb-text">{{ error }}</div>
+        </div>
+      }
+
+      <!-- EMAIL EXISTS — prominent alert -->
+      @if (isEmailExists) {
+        <div class="email-exists-box">
+          <div class="eeb-left">
+            <div class="eeb-icon-wrap">📧</div>
+          </div>
+          <div class="eeb-body">
+            <div class="eeb-title">Email already registered</div>
+            <div class="eeb-sub">
+              An account with <strong>{{ email.value }}</strong> already exists.
+            </div>
+            <div class="eeb-actions">
+              <a routerLink="/login" class="eeb-btn-primary">Sign in instead →</a>
+              <span class="eeb-or">or use a different email</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+        <!-- Full Name -->
+        <div class="field-group">
+          <label class="field-label">Full Name</label>
+          <div class="field-wrap" [class.field-error-state]="fullName.invalid && fullName.touched">
+            <span class="field-icon">👤</span>
+            <input type="text" class="field-input" formControlName="fullName"
+                   placeholder="Jane Doe">
+          </div>
+          @if (fullName.invalid && fullName.touched) {
+            <div class="field-err-msg">Please enter your full name (min 2 characters).</div>
+          }
+        </div>
+
+        <!-- Email -->
+        <div class="field-group">
+          <label class="field-label">Email Address</label>
+          <div class="field-wrap"
+               [class.field-error-state]="(email.invalid && email.touched) || isEmailExists"
+               [class.field-exists-state]="isEmailExists">
+            <span class="field-icon">✉</span>
+            <input type="email" class="field-input" formControlName="email"
+                   placeholder="you@example.com"
+                   (input)="onEmailChange()">
+            @if (isEmailExists) {
+              <span class="field-exists-icon" title="Email already registered">✕</span>
+            }
+            @if (!isEmailExists && email.valid && email.touched) {
+              <span class="field-ok-icon">✓</span>
+            }
+          </div>
+          @if (email.invalid && email.touched && !isEmailExists) {
+            <div class="field-err-msg">Please enter a valid email address.</div>
+          }
+          @if (isEmailExists) {
+            <div class="field-err-msg exists-msg">
+              This email is already taken.
+              <a routerLink="/login" class="exists-signin-link">Sign in instead</a>
+            </div>
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <div class="field-wrap" [class.field-error-state]="password.invalid && password.touched">
+            <span class="field-icon">🔒</span>
+            <input [type]="showPassword ? 'text' : 'password'"
+                   class="field-input" formControlName="password"
+                   placeholder="Min. 6 characters">
+            <button type="button" class="eye-toggle" (click)="showPassword = !showPassword">
+              {{ showPassword ? '🙈' : '👁' }}
+            </button>
+          </div>
+          @if (password.invalid && password.touched) {
+            <div class="field-err-msg">Password must be at least 6 characters.</div>
+          }
+          @if (password.value) {
+            <div class="pwd-strength">
+              <div class="pws-bar">
+                <div class="pws-fill"
+                     [style.width.%]="password.value.length >= 12 ? 100 : password.value.length >= 8 ? 66 : 33"
+                     [style.background]="password.value.length >= 12 ? 'var(--green-500)' : password.value.length >= 8 ? 'var(--amber-400)' : 'var(--rose-500)'">
+                </div>
+              </div>
+              <span class="pws-label"
+                    [style.color]="password.value.length >= 12 ? 'var(--green-500)' : password.value.length >= 8 ? 'var(--amber-400)' : 'var(--rose-500)'">
+                {{ password.value.length >= 12 ? 'Strong' : password.value.length >= 8 ? 'Good' : 'Weak' }}
+              </span>
+            </div>
+          }
+        </div>
+
+        <button type="submit" class="submit-btn" [class.loading]="loading" [disabled]="loading">
+          @if (!loading) {
+            <span class="submit-label">Create Account <span class="submit-arrow">→</span></span>
+          }
+          @if (loading) {
+            <span class="submit-loading"><span class="spinner-sm"></span> Creating account…</span>
+          }
+        </button>
+
+        <p class="terms-note">
+          By creating an account you agree to our
+          <span class="terms-link">Terms of Service</span> and
+          <span class="terms-link">Privacy Policy</span>.
+        </p>
+
+      </form>
+
+      <div class="divider"><span>or</span></div>
+
+      <p class="auth-switch">
+        Already have an account?
+        <a routerLink="/login" class="switch-link">Log in →</a>
+      </p>
+
+    </div>
+  </div>
+
+</div>
+
