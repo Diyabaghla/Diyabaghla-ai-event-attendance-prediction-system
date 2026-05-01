@@ -1,0 +1,125 @@
+<div class="auth-root">
+
+  <!-- LEFT PANEL -->
+  <div class="auth-left">
+    <canvas #bgCanvas class="bg-canvas"></canvas>
+    <div class="al-orb al-orb-1"></div>
+    <div class="al-orb al-orb-2"></div>
+
+    <div class="al-content">
+      <div class="al-brand">
+        <div class="brand-icon-box">⬡</div>
+        <span class="brand-name">EventAI</span>
+      </div>
+
+      <div class="al-hero">
+        <h2 class="al-title">AI-Powered Event Intelligence</h2>
+        <p class="al-sub">Predict attendance, plan resources, and eliminate no-shows — all in one platform.</p>
+      </div>
+
+      <div class="al-features">
+        @for (f of features; track f.text) {
+          <div class="al-feat">
+            <div class="af-icon">{{ f.icon }}</div>
+            <span class="af-text">{{ f.text }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="al-stats">
+        <div class="als-item">
+          <span class="als-val">98%</span>
+          <span class="als-lbl">Accuracy</span>
+        </div>
+        <div class="als-div"></div>
+        <div class="als-item">
+          <span class="als-val">3x</span>
+          <span class="als-lbl">Faster Planning</span>
+        </div>
+        <div class="als-div"></div>
+        <div class="als-item">
+          <span class="als-val">40%</span>
+          <span class="als-lbl">Fewer No-Shows</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL — Form -->
+  <div class="auth-right">
+    <div class="ar-card animate-in">
+
+      <div class="ar-header">
+        <div class="ar-logo">
+          <div class="brand-icon-box sm">⬡</div>
+          <span class="brand-name">EventAI</span>
+        </div>
+        <div class="ar-badge">
+          <span class="ar-badge-dot"></span> Secure Login
+        </div>
+      </div>
+
+      <h1 class="ar-title">Welcome back</h1>
+      <p class="ar-sub">Sign in to your AI prediction dashboard</p>
+
+      <!-- Error alert -->
+      @if (error) {
+        <div class="auth-error-box">
+          <div class="aeb-icon">⚠</div>
+          <div class="aeb-text">{{ error }}</div>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+        <div class="field-group">
+          <label class="field-label">Email Address</label>
+          <div class="field-wrap" [class.field-error-state]="email.invalid && email.touched">
+            <span class="field-icon">✉</span>
+            <input type="email" class="field-input" formControlName="email"
+                   placeholder="you@example.com"
+                   [class.invalid]="email.invalid && email.touched">
+          </div>
+          @if (email.invalid && email.touched) {
+            <div class="field-err-msg">Please enter a valid email address.</div>
+          }
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <div class="field-wrap" [class.field-error-state]="password.invalid && password.touched">
+            <span class="field-icon">🔒</span>
+            <input [type]="showPassword ? 'text' : 'password'" class="field-input"
+                   formControlName="password" placeholder="Your password"
+                   [class.invalid]="password.invalid && password.touched">
+            <button type="button" class="eye-toggle" (click)="showPassword = !showPassword">
+              {{ showPassword ? '🙈' : '👁' }}
+            </button>
+          </div>
+          @if (password.invalid && password.touched) {
+            <div class="field-err-msg">Password must be at least 6 characters.</div>
+          }
+        </div>
+
+        <button type="submit" class="submit-btn" [class.loading]="loading" [disabled]="loading">
+          @if (!loading) {
+            <span class="submit-label">Sign In <span class="submit-arrow">→</span></span>
+          }
+          @if (loading) {
+            <span class="submit-loading"><span class="spinner-sm"></span> Signing in…</span>
+          }
+        </button>
+
+      </form>
+
+      <div class="divider"><span>or</span></div>
+
+      <p class="auth-switch">
+        Don't have an account?
+        <a routerLink="/signup" class="switch-link">Create one free →</a>
+      </p>
+
+    </div>
+  </div>
+
+</div>
