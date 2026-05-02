@@ -1,0 +1,12 @@
+<div class="toast-container">
+  @for (t of toastSvc.toasts$ | async; track t.id) {
+    <div
+      class="toast"
+      [ngClass]="'toast-' + t.type"
+      (click)="dismiss(t.id)">
+      <div class="toast-icon">{{ t.icon }}</div>
+      <div class="toast-message">{{ t.message }}</div>
+      <button class="toast-close" (click)="dismiss(t.id)">✕</button>
+    </div>
+  }
+</div>
