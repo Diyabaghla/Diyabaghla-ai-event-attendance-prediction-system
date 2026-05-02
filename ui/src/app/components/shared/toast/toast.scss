@@ -1,0 +1,108 @@
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(100%); }
+}
+
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 380px;
+  width: 100%;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-weight: 500;
+  cursor: pointer;
+  pointer-events: all;
+  animation: slideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+  }
+
+  &.toast-success {
+    background: #0e1f1a;
+    border-color: rgba(16,185,129,0.4);
+    color: #6ee7b7;
+    .toast-icon { background: rgba(16,185,129,0.15); color: #10b981; }
+    &::before { background: #10b981; }
+  }
+
+  &.toast-error {
+    background: #1f0e11;
+    border-color: rgba(244,63,94,0.4);
+    color: #fda4af;
+    .toast-icon { background: rgba(244,63,94,0.15); color: #f43f5e; }
+    &::before { background: #f43f5e; }
+  }
+
+  &.toast-info {
+    background: #0e181f;
+    border-color: rgba(0,168,168,0.4);
+    color: #80e8e8;
+    .toast-icon { background: rgba(0,168,168,0.15); color: #00c5c5; }
+    &::before { background: #00a8a8; }
+  }
+
+  &.toast-warning {
+    background: #1f1a0e;
+    border-color: rgba(245,158,11,0.4);
+    color: #fcd34d;
+    .toast-icon { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    &::before { background: #f59e0b; }
+  }
+}
+
+.toast-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.5;
+  font-size: 13px;
+  padding: 2px 4px;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+  &:hover { opacity: 1; }
+}
