@@ -1,0 +1,277 @@
+<div class="landing">
+
+  <!-- ── CANVAS BACKGROUND ─────────────────────────────── -->
+  <canvas #heroCanvas class="hero-canvas"></canvas>
+
+  <!-- ── NAVBAR ────────────────────────────────────────── -->
+  <nav class="landing-nav" [class.scrolled]="scrolled">
+    <div class="nav-inner">
+      <div class="nav-logo">
+        <div class="logo-icon-wrap">⬡</div>
+        <span class="logo-text">EventAI</span>
+      </div>
+      <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#how"      class="nav-link">How It Works</a>
+        <a href="#stats"    class="nav-link">Results</a>
+      </div>
+      <div class="nav-actions">
+        <a routerLink="/login"  class="nav-btn-secondary">Sign In</a>
+        <a routerLink="/signup" class="nav-btn-primary">Get Started →</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── HERO ──────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-left">
+        <div class="hero-badge">
+          <span class="badge-pulse"></span>
+          Powered by Machine Learning · 3 AI Models
+        </div>
+
+        <h1 class="hero-title">
+          Predict. Plan.<br>
+          <span class="title-gradient">Perform.</span>
+        </h1>
+
+        <p class="hero-tagline">
+          The intelligent event management platform that uses AI to forecast
+          attendance, eliminate no-shows, and optimize every resource
+          <em>before the doors open.</em>
+        </p>
+
+        <div class="hero-cta">
+          <button class="cta-primary" (click)="goToDashboard()">
+            <span>Get Started Free</span>
+            <span class="cta-arrow">→</span>
+          </button>
+          <a routerLink="/login" class="cta-secondary">Sign In</a>
+        </div>
+
+        <div class="hero-trust">
+          <div class="trust-avatars">
+            <div class="ta" style="background:#00a8a8">A</div>
+            <div class="ta" style="background:#8b5cf6">P</div>
+            <div class="ta" style="background:#f59e0b">R</div>
+            <div class="ta" style="background:#10b981">S</div>
+          </div>
+          <p class="trust-text">Trusted by <strong>100+ event teams</strong> across departments</p>
+        </div>
+      </div>
+
+      <!-- Preview card -->
+      <div class="hero-right">
+        <div class="preview-wrap">
+          <div class="mini-card mc-1">
+            <div class="mc-icon">📈</div>
+            <div><div class="mc-title">Attendance</div><div class="mc-val teal">387 predicted</div></div>
+          </div>
+          <div class="mini-card mc-2">
+            <div class="mc-icon">✅</div>
+            <div><div class="mc-title">Accuracy</div><div class="mc-val green">98.5%</div></div>
+          </div>
+          <div class="mini-card mc-3">
+            <div class="mc-icon">👥</div>
+            <div><div class="mc-title">Staff needed</div><div class="mc-val amber">18 people</div></div>
+          </div>
+
+          <div class="preview-card">
+            <div class="preview-titlebar">
+              <div class="ptb-dots">
+                <div class="ptb-dot r"></div><div class="ptb-dot y"></div><div class="ptb-dot g"></div>
+              </div>
+              <span class="ptb-title">AI Prediction Dashboard</span>
+            </div>
+            <div class="preview-body">
+              <div class="pb-row">
+                <span class="pb-label">Event</span>
+                <span class="pb-val">Annual Tech Summit</span>
+              </div>
+              <div class="pb-row">
+                <span class="pb-label">Registrations</span>
+                <span class="pb-val">480</span>
+              </div>
+              <div class="pb-row">
+                <span class="pb-label">AI Predicted</span>
+                <span class="pb-val teal">387 attendees</span>
+              </div>
+              <div class="pb-row">
+                <span class="pb-label">Confidence</span>
+                <span class="pb-val amber">94.2%</span>
+              </div>
+              <div class="pb-bar-wrap">
+                <div class="pb-bar-track">
+                  <div class="pb-bar-fill"></div>
+                </div>
+                <span class="pb-bar-pct">80% capacity</span>
+              </div>
+              <div class="pb-chips">
+                <div class="pb-chip">🪑 418 Chairs</div>
+                <div class="pb-chip">🍽 420 Meals</div>
+                <div class="pb-chip">👷 18 Staff</div>
+                <div class="pb-chip">💧 968 Water</div>
+              </div>
+              <div class="pb-sparkline">
+                <svg viewBox="0 0 200 40" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#00a8a8" stop-opacity="0.3"/>
+                      <stop offset="100%" stop-color="#00a8a8" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <polygon points="0,38 25,30 50,34 75,22 100,26 125,18 150,14 175,8 200,10 200,40 0,40" fill="url(#sg)"/>
+                  <polyline points="0,38 25,30 50,34 75,22 100,26 125,18 150,14 175,8 200,10"
+                    fill="none" stroke="#00c5c5" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span class="spark-label">Fill rate trend ↑</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-indicator">
+      <div class="scroll-dot"></div>
+    </div>
+  </section>
+
+  <!-- ── STATS STRIP ────────────────────────────────────── -->
+  <section class="stats-section" id="stats">
+    <div class="stats-inner">
+      @for (s of stats; track s.label; let i = $index) {
+        <div class="stat-item">
+          <div class="stat-icon-wrap">{{ s.icon }}</div>
+          <div class="stat-number">{{ displayStats[i] }}</div>
+          <div class="stat-label">{{ s.label }}</div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ── FEATURES ───────────────────────────────────────── -->
+  <section class="features-section" id="features">
+    <div class="section-container">
+      <div class="section-tag">Features</div>
+      <h2 class="section-title">Everything you need to run<br><span class="title-gradient">smarter events</span></h2>
+      <p class="section-sub">From creation to completion — AI handles the complexity so you can focus on the experience.</p>
+
+      <div class="features-grid">
+        @for (f of features; track f.title; let i = $index) {
+          <div class="feature-card" [style.animation-delay]="(i * 0.08) + 's'">
+            <div class="fc-top">
+              <div class="fc-icon-wrap" [style.background]="f.color + '18'" [style.border-color]="f.color + '30'">
+                <span>{{ f.icon }}</span>
+              </div>
+              <div class="fc-arrow">→</div>
+            </div>
+            <h3 class="fc-title">{{ f.title }}</h3>
+            <p class="fc-desc">{{ f.desc }}</p>
+            <div class="fc-accent" [style.background]="f.color"></div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ───────────────────────────────────── -->
+  <section class="how-section" id="how">
+    <div class="section-container">
+      <div class="section-tag">How It Works</div>
+      <h2 class="section-title">From event creation to<br><span class="title-gradient">AI-powered insights</span></h2>
+
+      <div class="steps-row">
+        @for (s of steps; track s.num; let last = $last) {
+          <div class="step-card">
+            <div class="step-num-wrap">
+              <span class="step-num">{{ s.num }}</span>
+            </div>
+            <div class="step-icon">{{ s.icon }}</div>
+            <h3 class="step-title">{{ s.title }}</h3>
+            <p class="step-desc">{{ s.desc }}</p>
+          </div>
+          @if (!last) {
+            <div class="step-connector">
+              <div class="connector-line"></div>
+              <div class="connector-arrow">→</div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TESTIMONIALS ───────────────────────────────────── -->
+  <section class="testimonials-section">
+    <div class="section-container">
+      <div class="section-tag">Testimonials</div>
+      <h2 class="section-title">Trusted by event teams</h2>
+      <div class="testimonials-grid">
+        @for (t of testimonials; track t.name) {
+          <div class="testi-card">
+            <div class="testi-quote">"</div>
+            <p class="testi-text">{{ t.text }}</p>
+            <div class="testi-footer">
+              <div class="testi-avatar" [style.background]="t.color">{{ t.avatar }}</div>
+              <div>
+                <div class="testi-name">{{ t.name }}</div>
+                <div class="testi-role">{{ t.role }}</div>
+              </div>
+              <div class="testi-stars">★★★★★</div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA SECTION ────────────────────────────────────── -->
+  <section class="cta-section">
+    <div class="cta-bg-orb"></div>
+    <div class="cta-inner">
+      <div class="cta-badge">
+        <span class="badge-pulse"></span> Join EventAI today
+      </div>
+      <h2 class="cta-title">Ready to predict your<br><span class="title-gradient">next event's success?</span></h2>
+      <p class="cta-sub">Start for free. No credit card required. Instant AI predictions.</p>
+      <div class="cta-buttons">
+        <a routerLink="/signup" class="cta-primary">
+          Create Free Account <span class="cta-arrow">→</span>
+        </a>
+        <a routerLink="/login" class="cta-secondary">Sign In</a>
+      </div>
+      <div class="cta-features">
+        <span>✓ 3 AI Models</span>
+        <span>✓ Real-time predictions</span>
+        <span>✓ Resource planning</span>
+        <span>✓ Analytics dashboard</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────── -->
+  <footer class="landing-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="logo-icon-wrap">⬡</div>
+        <span class="logo-text">EventAI</span>
+      </div>
+      <p class="footer-desc">AI-powered event attendance prediction and resource planning platform.</p>
+      <div class="footer-links">
+        <a routerLink="/login">Sign In</a>
+        <a routerLink="/signup">Get Started</a>
+      </div>
+      <p class="footer-copy">© 2026 EventAI · AI Event Attendance Prediction System</p>
+    </div>
+  </footer>
+
+</div>
+
