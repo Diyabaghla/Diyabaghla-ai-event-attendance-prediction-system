@@ -1,0 +1,392 @@
+ <div class="regs-root animate-in">
+
+  <!-- ── HERO ──────────────────────────────────────────────── -->
+  <div class="regs-hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span>
+        {{ auth.isAdmin ? 'System Overview' : 'My Activity' }}
+      </div>
+      <h1 class="hero-title">Registrations</h1>
+      <p class="hero-sub">
+        {{ auth.isAdmin ? 'All event registrations across the platform.' : 'Track your event registrations and attendance history.' }}
+      </p>
+    </div>
+    <button class="btn-register" (click)="openRegister()">
+      <span class="btn-reg-icon">🎫</span> Register for Event
+    </button>
+  </div>
+
+  <!-- ── STAT CARDS ─────────────────────────────────────────── -->
+  <div class="stat-row">
+
+    <div class="stat-card sc-teal">
+      <div class="sc-left">
+        <div class="sc-icon-wrap teal-wrap">🎫</div>
+        <div>
+          <div class="sc-val">{{ totalCount }}</div>
+          <div class="sc-lbl">Total</div>
+        </div>
+      </div>
+      <div class="sc-ring">
+        <svg viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="24" fill="none" stroke="rgba(0,168,168,0.12)" stroke-width="6"/>
+          <circle cx="30" cy="30" r="24" fill="none" stroke="#00a8a8" stroke-width="6"
+            stroke-dasharray="151" stroke-dashoffset="0"
+            stroke-linecap="round" transform="rotate(-90 30 30)"
+            style="transition:all 1.2s ease"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="stat-card sc-green">
+      <div class="sc-left">
+        <div class="sc-icon-wrap green-wrap">✅</div>
+        <div>
+          <div class="sc-val green-val">{{ activeCount }}</div>
+          <div class="sc-lbl">Active</div>
+        </div>
+      </div>
+      <div class="sc-ring">
+        <svg viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="24" fill="none" stroke="rgba(16,185,129,0.12)" stroke-width="6"/>
+          <circle cx="30" cy="30" r="24" fill="none" stroke="#10b981" stroke-width="6"
+            stroke-dasharray="151"
+            [attr.stroke-dashoffset]="151 - (activeRate / 100 * 151)"
+            stroke-linecap="round" transform="rotate(-90 30 30)"
+            style="transition:all 1.2s ease"/>
+        </svg>
+        <span class="ring-pct">{{ activeRate }}%</span>
+      </div>
+    </div>
+
+    <div class="stat-card sc-rose">
+      <div class="sc-left">
+        <div class="sc-icon-wrap rose-wrap">❌</div>
+        <div>
+          <div class="sc-val rose-val">{{ cancelledCount }}</div>
+          <div class="sc-lbl">Cancelled</div>
+        </div>
+      </div>
+      <div class="cancel-bar-wrap">
+        <div class="cancel-bar">
+          <div class="cancel-fill"
+               [style.width.%]="totalCount ? (cancelledCount / totalCount) * 100 : 0">
+          </div>
+        </div>
+        <span class="cancel-pct">{{ totalCount ? ((cancelledCount/totalCount)*100 | number:'1.0-0') : 0 }}% cancel rate</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── FILTERS BAR ────────────────────────────────────────── -->
+  <div class="filters-bar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" type="text"
+             [placeholder]="auth.isAdmin ? 'Search event, user or email…' : 'Search events…'"
+             [(ngModel)]="searchQuery" (ngModelChange)="applyFilter()">
+    </div>
+
+    <div class="pill-tabs">
+      @for (s of ['All','Registered','Cancelled']; track s) {
+        <button class="pill-tab" [class.active]="filterStatus === s"
+                (click)="filterStatus = s; applyFilter()">{{ s }}</button>
+      }
+    </div>
+
+    <div class="view-toggle">
+      <button class="vt-btn" [class.active]="viewMode==='table'" (click)="viewMode='table'" title="Table view">☰</button>
+      <button class="vt-btn" [class.active]="viewMode==='cards'" (click)="viewMode='cards'" title="Card view">▦</button>
+    </div>
+
+    <span class="results-count">{{ filtered.length }} result{{ filtered.length !== 1 ? 's' : '' }}</span>
+  </div>
+
+  <!-- ── ERROR ─────────────────────────────────────────────── -->
+  @if (error) {
+    <div class="dash-alert">⚠ {{ error }}</div>
+  }
+
+  <!-- ── LOADER ─────────────────────────────────────────────── -->
+  @if (loading) {
+    <div class="regs-loading">
+      <div class="loading-ring"></div>
+      <p>Loading registrations…</p>
+    </div>
+  }
+
+  <!-- ── EMPTY STATE ────────────────────────────────────────── -->
+  @if (!loading && filtered.length === 0) {
+    <div class="regs-empty">
+      <div class="empty-visual">
+        <svg viewBox="0 0 120 100" width="120">
+          <rect x="15" y="15" width="90" height="28" rx="8"
+                fill="rgba(0,168,168,0.08)" stroke="rgba(0,168,168,0.2)" stroke-width="1.5"/>
+          <rect x="15" y="52" width="90" height="28" rx="8"
+                fill="rgba(0,168,168,0.05)" stroke="rgba(0,168,168,0.12)" stroke-width="1.5"/>
+          <rect x="25" y="23" width="40" height="5" rx="2.5" fill="rgba(0,168,168,0.2)"/>
+          <rect x="25" y="32" width="25" height="4" rx="2"   fill="rgba(0,168,168,0.12)"/>
+          <rect x="25" y="60" width="40" height="5" rx="2.5" fill="rgba(0,168,168,0.15)"/>
+          <rect x="25" y="69" width="25" height="4" rx="2"   fill="rgba(0,168,168,0.08)"/>
+          <circle cx="95" cy="28" r="7" fill="rgba(16,185,129,0.2)" stroke="rgba(16,185,129,0.4)" stroke-width="1"/>
+          <circle cx="95" cy="65" r="7" fill="rgba(244,63,94,0.15)" stroke="rgba(244,63,94,0.3)" stroke-width="1"/>
+        </svg>
+      </div>
+      <h3>No registrations found</h3>
+      @if (searchQuery || filterStatus !== 'All') {
+        <p>Try adjusting your filters.</p>
+      }
+      @if (!searchQuery && filterStatus === 'All') {
+        <p>You have no registrations yet. Browse events to get started.</p>
+      }
+      <a routerLink="/app/events" class="btn-register" style="display:inline-flex;text-decoration:none">
+        Browse Events →
+      </a>
+    </div>
+  }
+
+  <!-- ── TABLE VIEW ─────────────────────────────────────────── -->
+  @if (!loading && filtered.length > 0 && viewMode === 'table') {
+    <div class="table-card">
+      <table class="regs-table">
+        <thead>
+          <tr>
+            <th class="sortable" (click)="setSort('event')">
+              Event <span class="sort-icon">{{ sortIcon('event') }}</span>
+            </th>
+            @if (auth.isAdmin) {
+              <th>User</th>
+            }
+            <th class="sortable" (click)="setSort('date')">
+              Registered <span class="sort-icon">{{ sortIcon('date') }}</span>
+            </th>
+            <th>Days Before</th>
+            <th>Att. Rate</th>
+            <th class="sortable" (click)="setSort('status')">
+              Status <span class="sort-icon">{{ sortIcon('status') }}</span>
+            </th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of filtered; track r.id) {
+            <tr [class.row-cancelled]="r.status === 'Cancelled'">
+
+              <!-- Event -->
+              <td>
+                <div class="td-event">
+                  <div class="event-dot" [class.dot-active]="r.status === 'Registered'"
+                       [class.dot-cancelled]="r.status === 'Cancelled'"></div>
+                  <div class="event-name">{{ r.eventTitle }}</div>
+                </div>
+              </td>
+
+              <!-- User (admin only) -->
+              @if (auth.isAdmin) {
+                <td>
+                  <div class="td-user">
+                    <div class="user-avatar" [style.background]="getAvatarColor(r.userName)">
+                      {{ getInitials(r.userName) }}
+                    </div>
+                    <div>
+                      <div class="user-name">{{ r.userName }}</div>
+                      <div class="user-email">{{ r.userEmail }}</div>
+                    </div>
+                  </div>
+                </td>
+              }
+
+              <!-- Date -->
+              <td>
+                <div class="td-date">{{ formatDate(r.registrationDate) }}</div>
+              </td>
+
+              <!-- Days before -->
+              <td>
+                <span class="days-chip">{{ getDaysLabel(r.daysBeforeRegistration) }}</span>
+              </td>
+
+              <!-- Attendance rate -->
+              <td>
+                <div class="rate-wrap">
+                  <div class="rate-bar">
+                    <div class="rate-fill" [style.width.%]="(r.pastUserAttendanceRate || 0) * 100"></div>
+                  </div>
+                  <span class="rate-pct">{{ ((r.pastUserAttendanceRate || 0) * 100) | number:'1.0-0' }}%</span>
+                </div>
+              </td>
+
+              <!-- Status -->
+              <td>
+                <span class="status-badge"
+                      [class.status-active]="r.status === 'Registered'"
+                      [class.status-cancelled]="r.status === 'Cancelled'">
+                  <span class="status-dot"></span>
+                  {{ r.status }}
+                </span>
+              </td>
+
+              <!-- Action -->
+              <td>
+                @if (r.status === 'Registered') {
+                  <button class="cancel-btn"
+                          [class.cancelling]="cancellingId === r.id"
+                          (click)="cancel(r)">
+                    @if (cancellingId !== r.id) {
+                      <span>Cancel</span>
+                    }
+                    @if (cancellingId === r.id) {
+                      <span class="spinner" style="width:14px;height:14px;border-width:2px"></span>
+                    }
+                  </button>
+                }
+                @if (r.status === 'Cancelled') {
+                  <span class="no-action">—</span>
+                }
+              </td>
+
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- ── CARD VIEW ──────────────────────────────────────────── -->
+  @if (!loading && filtered.length > 0 && viewMode === 'cards') {
+    <div class="cards-grid">
+      @for (r of filtered; track r.id) {
+        <div class="reg-card" [class.reg-card-cancelled]="r.status === 'Cancelled'">
+
+          <div class="rc-header" [class.rch-active]="r.status === 'Registered'"
+                                  [class.rch-cancelled]="r.status === 'Cancelled'">
+            <span class="status-badge"
+                  [class.status-active]="r.status === 'Registered'"
+                  [class.status-cancelled]="r.status === 'Cancelled'">
+              <span class="status-dot"></span>{{ r.status }}
+            </span>
+            <span class="rc-date">{{ formatDate(r.registrationDate) }}</span>
+          </div>
+
+          <div class="rc-body">
+            <div class="rc-event-name">{{ r.eventTitle }}</div>
+
+            @if (auth.isAdmin) {
+              <div class="rc-user">
+                <div class="user-avatar sm" [style.background]="getAvatarColor(r.userName)">
+                  {{ getInitials(r.userName) }}
+                </div>
+                <div>
+                  <div class="user-name">{{ r.userName }}</div>
+                  <div class="user-email">{{ r.userEmail }}</div>
+                </div>
+              </div>
+            }
+
+            <div class="rc-meta">
+              <div class="rc-meta-row">
+                <span class="rcm-icon">📅</span>
+                <span>{{ getDaysLabel(r.daysBeforeRegistration) }}</span>
+              </div>
+              <div class="rc-meta-row">
+                <span class="rcm-icon">📊</span>
+                <span>{{ ((r.pastUserAttendanceRate || 0) * 100) | number:'1.0-0' }}% past attendance rate</span>
+              </div>
+            </div>
+
+            <div class="rc-rate-bar">
+              <div class="rate-bar" style="width:100%">
+                <div class="rate-fill" [style.width.%]="(r.pastUserAttendanceRate || 0) * 100"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rc-footer">
+            @if (r.status === 'Registered') {
+              <button class="cancel-btn"
+                      [class.cancelling]="cancellingId === r.id"
+                      (click)="cancel(r)">
+                @if (cancellingId !== r.id) {
+                  <span>Cancel Registration</span>
+                }
+                @if (cancellingId === r.id) {
+                  <span class="spinner" style="width:14px;height:14px;border-width:2px"></span>
+                }
+              </button>
+            }
+            @if (r.status === 'Cancelled') {
+              <span class="cancelled-label">Registration withdrawn</span>
+            }
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ── REGISTER MODAL ─────────────────────────────────────── -->
+  @if (showRegisterModal) {
+    <div class="modal-backdrop" (click)="showRegisterModal = false">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-title-icon">🎫</div>
+            <h2 class="modal-title">Register for Event</h2>
+          </div>
+          <button class="modal-close" (click)="showRegisterModal = false">✕</button>
+        </div>
+
+        <div class="modal-body">
+          @if (regError) {
+            <div class="alert alert-error">⚠ {{ regError }}</div>
+          }
+
+          <div class="form-group">
+            <label class="form-label">Select Event *</label>
+            <select class="form-control" [(ngModel)]="selectedEventId">
+              <option [ngValue]="null" disabled>— Choose an event —</option>
+              @for (ev of upcomingEvents; track ev.id) {
+                <option [value]="ev.id">
+                  {{ ev.title }} — {{ ev.department }} ({{ ev.mode }})
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Your Past Attendance Rate</label>
+            <div class="rate-input-wrap">
+              <input type="range" class="rate-slider" [(ngModel)]="pastRate" min="0" max="1" step="0.05">
+              <div class="rate-display">
+                <span class="rate-display-val">{{ (pastRate * 100) | number:'1.0-0' }}%</span>
+              </div>
+            </div>
+            <div class="rate-bar" style="margin-top:8px">
+              <div class="rate-fill" [style.width.%]="pastRate * 100"></div>
+            </div>
+            <p class="form-hint">
+              Your historical attendance rate — used by the AI model to predict future attendance probability.
+            </p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="showRegisterModal = false">Cancel</button>
+          <button class="btn btn-primary" (click)="submitRegister()" [disabled]="registering || !selectedEventId">
+            @if (!registering) {
+              <span>Confirm Registration</span>
+            }
+            @if (registering) {
+              <span class="spinner" style="width:18px;height:18px;border-width:2px"></span>
+            }
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+</div>
