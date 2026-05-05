@@ -1,0 +1,281 @@
+
+<div class="page-container animate-in">
+
+  <!-- HEADER -->
+  <div class="rp-header">
+    <div>
+      <h1 class="page-title">Resource Planning</h1>
+      <p class="page-subtitle">AI-powered logistics calculator for your events</p>
+    </div>
+    <div class="header-badge">
+      <span class="hb-dot"></span>
+      Smart Calculator
+    </div>
+  </div>
+
+  <div class="rp-layout">
+
+    <!-- LEFT: CONFIG PANEL -->
+    <div class="config-panel">
+
+      <!-- Event Selector -->
+      <div class="cp-section">
+        <div class="cp-section-label">Select Event</div>
+        @if (loadingEvents) {
+          <div class="flex-center" style="padding:20px">
+            <div class="spinner"></div>
+          </div>
+        }
+        @if (!loadingEvents) {
+          <select class="form-control" [(ngModel)]="selectedEventId" (ngModelChange)="onSelect()">
+            <option [ngValue]="null" disabled>— Choose an event —</option>
+            @for (ev of events; track ev.id) {
+              <option [ngValue]="ev.id">{{ ev.title }}</option>
+            }
+          </select>
+        }
+
+        <!-- Event quick info -->
+        @if (selectedEvent) {
+          <div class="event-info-card">
+            <div class="eic-row">
+              <span class="eic-icon">📅</span>
+              <span class="eic-val">{{ formatDate(selectedEvent.eventDate) }}</span>
+            </div>
+            <div class="eic-row">
+              <span class="eic-icon">🏟</span>
+              <span class="eic-val">{{ selectedEvent.locationCapacity | number }} capacity</span>
+            </div>
+            <div class="eic-row">
+              <span class="eic-icon">🎫</span>
+              <span class="eic-val">{{ (selectedEvent.activeRegistrations ?? 0) | number }} registered</span>
+            </div>
+            <div class="eic-row">
+              <span class="eic-icon">📊</span>
+              <span class="eic-val">{{ selectedEvent.mode }} · {{ selectedEvent.eventType }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Mode Toggle -->
+      <div class="cp-section">
+        <div class="cp-section-label">Calculation Mode</div>
+        <div class="mode-tabs">
+          <button class="mode-tab" [class.active]="!manualOverride" (click)="setMode(false)">
+            <span>🤖</span> AI Prediction
+          </button>
+          <button class="mode-tab" [class.active]="manualOverride" (click)="setMode(true)">
+            <span>✏️</span> Manual
+          </button>
+        </div>
+      </div>
+
+      <!-- Manual Input -->
+      @if (manualOverride) {
+        <div class="cp-section">
+          <div class="cp-section-label">Expected Attendance</div>
+          <div class="attendance-input-wrap">
+            <input type="number" class="form-control attendance-input"
+                   [(ngModel)]="manualAttendance" min="1" max="10000"
+                   placeholder="Enter number">
+            <div class="attendance-slider">
+              <input type="range" [(ngModel)]="manualAttendance" min="1" max="2000" step="5">
+            </div>
+            <div class="slider-labels">
+              <span>1</span><span>{{ manualAttendance }}</span><span>2000</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Buffer Slider -->
+      <div class="cp-section">
+        <div class="cp-section-label">Safety Buffer: {{ bufferPercent }}%</div>
+        <input type="range" class="buffer-slider" [(ngModel)]="bufferPercent" min="0" max="25" step="1">
+        <div class="slider-labels"><span>0%</span><span>25%</span></div>
+      </div>
+
+      <!-- Error -->
+      @if (error) {
+        <div class="alert alert-error" style="margin:8px 0">⚠ {{ error }}</div>
+      }
+
+      <!-- Calculate Button -->
+      <button class="calc-btn" [disabled]="!selectedEventId || loading" (click)="calculate()">
+        @if (!loading) {
+          <span>
+            <span class="calc-btn-icon">⚡</span>
+            Calculate Resources
+          </span>
+        }
+        @if (loading) {
+          <span class="calc-loading">
+            <span class="spinner" style="width:18px;height:18px;border-width:2px"></span>
+            Computing…
+          </span>
+        }
+      </button>
+
+      <!-- AI Source Tag -->
+      @if (prediction && !manualOverride) {
+        <div class="source-tag">
+          <span class="source-pulse"></span>
+          AI predicted <strong>{{ prediction.predictedAttendance }}</strong> attendees
+        </div>
+      }
+
+    </div>
+
+    <!-- RIGHT: RESULTS PANEL -->
+    <div class="results-panel">
+
+      <!-- EMPTY STATE -->
+      @if (!calculated && !loading) {
+        <div class="empty-state-v2">
+          <div class="es-visual">
+            <div class="es-ring-1"></div>
+            <div class="es-ring-2"></div>
+            <div class="es-center-icon">📦</div>
+          </div>
+          <h3>Ready to plan</h3>
+          <p>Select an event and click Calculate to generate a full resource breakdown with AI-powered estimates.</p>
+          <div class="es-preview-chips">
+            <span class="chip teal">🪑 Seating</span>
+            <span class="chip amber">🍽️ Catering</span>
+            <span class="chip purple">👥 Staff</span>
+            <span class="chip rose">🔧 Equipment</span>
+          </div>
+        </div>
+      }
+
+      <!-- LOADING -->
+      @if (loading) {
+        <div class="results-loading">
+          <div class="loading-orbs">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+          </div>
+          <p>Fetching AI prediction and calculating resources…</p>
+        </div>
+      }
+
+      <!-- RESULTS -->
+      @if (calculated && !loading) {
+        <div class="results-content animate-in">
+
+          <!-- SUMMARY ROW -->
+          <div class="summary-row">
+            <!-- Donut chart -->
+            <div class="donut-wrap">
+              <svg viewBox="0 0 120 120" class="donut-svg">
+                <circle cx="60" cy="60" r="54" fill="none" stroke="var(--bg-elevated)" stroke-width="12"/>
+                @for (cat of categories; track cat.id; let i = $index) {
+                  <circle cx="60" cy="60" r="54" fill="none"
+                    [attr.stroke]="cat.color"
+                    stroke-width="12"
+                    stroke-linecap="butt"
+                    [attr.stroke-dasharray]="getCategoryDash(cat) + ' ' + donutCircumference"
+                    [attr.stroke-dashoffset]="getCategoryOffset(i)"
+                    transform="rotate(-90 60 60)"
+                    style="transition: all 1s cubic-bezier(0.4,0,0.2,1)"/>
+                }
+                <text x="60" y="54" text-anchor="middle" font-family="Syne" font-size="18" font-weight="800" fill="var(--text-primary)">{{ attendanceCount }}</text>
+                <text x="60" y="70" text-anchor="middle" font-family="DM Sans" font-size="9" fill="var(--text-muted)">ATTENDEES</text>
+              </svg>
+              <div class="donut-legend">
+                @for (cat of categories; track cat.id) {
+                  <div class="dl-item">
+                    <span class="dl-dot" [style.background]="cat.color"></span>
+                    {{ cat.label }}
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Summary stats -->
+            <div class="summary-stats">
+              <div class="ss-card">
+                <div class="ss-val" style="color:var(--teal-400)">{{ attendanceCount }}</div>
+                <div class="ss-lbl">Expected Attendees</div>
+              </div>
+              <div class="ss-card">
+                <div class="ss-val" style="color:var(--amber-400)">{{ totalItems }}</div>
+                <div class="ss-lbl">Total Items Needed</div>
+              </div>
+              <div class="ss-card">
+                <div class="ss-val" style="color:var(--green-500)">{{ totalStaff }}</div>
+                <div class="ss-lbl">Total Staff Required</div>
+              </div>
+              <div class="ss-card">
+                <div class="ss-val" [style.color]="capacityColor">{{ capacityFill }}%</div>
+                <div class="ss-lbl">Venue Fill Rate</div>
+                <div class="capacity-bar">
+                  <div class="capacity-fill"
+                       [style.width.%]="capacityFill"
+                       [style.background]="capacityColor">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CATEGORY TABS -->
+          <div class="cat-tabs">
+            @for (cat of categories; track cat.id) {
+              <button
+                class="cat-tab"
+                [class.active]="activeCategory === cat.id"
+                [style.--tab-color]="cat.color"
+                (click)="activeCategory = cat.id">
+                <span class="cat-tab-icon">{{ cat.icon }}</span>
+                <span class="cat-tab-label">{{ cat.label }}</span>
+                <span class="cat-tab-count">{{ cat.items.length }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- RESOURCE ITEMS -->
+          @if (activeCategory$) {
+            <div class="resource-grid">
+              @for (item of activeCategory$!.items; track item.label; let i = $index) {
+                <div class="resource-item-card"
+                     [style.animation-delay]="(i * 0.08) + 's'">
+                  <div class="ric-top">
+                    <div class="ric-icon-wrap" [style.background]="item.color + '20'" [style.border-color]="item.color + '40'">
+                      <span>{{ item.icon }}</span>
+                    </div>
+                    <div class="ric-tip">{{ item.tip }}</div>
+                  </div>
+                  <div class="ric-value" [style.color]="item.color">{{ item.display | number }}</div>
+                  <div class="ric-label">{{ item.label }}</div>
+                  <div class="ric-unit">{{ item.unit }}</div>
+                  <div class="ric-bar">
+                    <div class="ric-bar-fill"
+                         [style.width.%]="(item.value / (activeCategory$!.items[0]?.value || 1)) * 100"
+                         [style.background]="item.color">
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- BUFFER NOTE -->
+          <div class="buffer-note">
+            <span class="bn-icon">✅</span>
+            All quantities include a <strong>{{ bufferPercent }}%</strong> safety buffer above predicted attendance of <strong>{{ attendanceCount }}</strong>.
+            @if (manualOverride) {
+              <span class="bn-tag">Manual Mode</span>
+            }
+            @if (!manualOverride) {
+              <span class="bn-tag ai">AI Powered</span>
+            }
+          </div>
+
+        </div>
+      }
+    </div>
+  </div>
+</div>
