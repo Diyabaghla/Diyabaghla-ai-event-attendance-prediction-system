@@ -1,0 +1,136 @@
+<div class="page-container animate-in">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">User Attendance Prediction</h1>
+      <p class="page-subtitle">Probability score for your personal attendance at any event</p>
+    </div>
+    <div class="ai-badge">🧠 Personalized Model</div>
+  </div>
+
+  <div class="pred-layout">
+
+    <!-- Input Panel -->
+    <div class="pred-panel">
+      <div class="panel-label">Event Selection</div>
+
+      <div *ngIf="loadingEvents" class="flex-center" style="padding:32px"><div class="spinner"></div></div>
+
+      <div *ngIf="!loadingEvents">
+        <div class="form-group">
+          <label class="form-label">Select Event</label>
+          <select class="form-control" [(ngModel)]="selectedEventId" (ngModelChange)="onSelect()">
+            <option [ngValue]="null" disabled>— Choose an event —</option>
+            <option *ngFor="let ev of events" [ngValue]="ev.id">{{ ev.title }}</option>
+          </select>
+        </div>
+
+        <div class="info-block" *ngIf="selectedEvent">
+          <div class="info-row"><span class="info-lbl">🏢 Department</span><span class="info-val">{{ selectedEvent.department }}</span></div>
+          <div class="info-row"><span class="info-lbl">📅 Day</span><span class="info-val">{{ selectedEvent.dayOfWeek }}</span></div>
+          <div class="info-row"><span class="info-lbl">💻 Mode</span><span class="info-val">{{ selectedEvent.mode }}</span></div>
+          <div class="info-row"><span class="info-lbl">🔔 Reminder</span><span class="info-val">{{ selectedEvent.reminderSent ? 'Yes' : 'No' }}</span></div>
+        </div>
+
+        <div class="model-note">
+          <div class="note-icon">ℹ️</div>
+          <div>
+            This model returns a <strong>probability score</strong> (0–1) using your historical attendance pattern and event features.
+          </div>
+        </div>
+
+        <div class="alert alert-error" *ngIf="error" style="margin-top:12px">⚠ {{ error }}</div>
+
+        <button class="btn btn-primary w-full btn-lg" style="margin-top:16px"
+                [disabled]="!selectedEventId || loading" (click)="predict()">
+          <span *ngIf="!loading">🧠 Get Probability Score</span>
+          <span *ngIf="loading" style="display:flex;align-items:center;gap:10px;justify-content:center">
+            <span class="spinner" style="width:20px;height:20px;border-width:2px"></span> Computing…
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Result Panel -->
+    <div class="result-panel">
+      <!-- Empty -->
+      <div class="result-empty" *ngIf="!result && !loading">
+        <div class="empty-graphic">🎯</div>
+        <h3>Your Attendance Probability</h3>
+        <p>This model focuses on the likelihood score — a precise 0–100% estimate of whether you'll attend.</p>
+        <div class="diff-note">
+          <strong>Vs No-Show Prediction:</strong> No-Show gives you Attend/Not Attend. This gives you the raw probability score with full precision.
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="result-loading" *ngIf="loading">
+        <div class="spinner" style="width:56px;height:56px;border-width:4px"></div>
+        <p>Computing your personal probability…</p>
+      </div>
+
+      <!-- Result -->
+      <div class="result-content animate-in" *ngIf="result && !loading">
+
+        <!-- Circular gauge -->
+        <div class="circle-gauge-wrap">
+          <svg class="circle-gauge" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="54" fill="none" stroke="var(--bg-elevated)" stroke-width="10"/>
+            <circle cx="60" cy="60" r="54" fill="none"
+                    [attr.stroke]="levelColor"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    [attr.stroke-dasharray]="circumference"
+                    [attr.stroke-dashoffset]="dashoffset"
+                    transform="rotate(-90 60 60)"
+                    style="transition: stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)"/>
+            <text x="60" y="55" text-anchor="middle" dominant-baseline="middle"
+                  font-family="Syne, sans-serif" font-size="22" font-weight="800" fill="var(--text-primary)">
+              {{ probabilityPct }}%
+            </text>
+            <text x="60" y="74" text-anchor="middle"
+                  font-family="DM Sans, sans-serif" font-size="8" fill="var(--text-muted)">
+              PROBABILITY
+            </text>
+          </svg>
+        </div>
+
+        <!-- Level indicator -->
+        <div class="level-indicator" [style.border-color]="levelColor" [style.background]="levelColor + '18'">
+          <span class="level-emoji">{{ levelEmoji }}</span>
+          <div>
+            <div class="level-label" [style.color]="levelColor">{{ probabilityLevel }} Likelihood</div>
+            <div class="level-sub">{{ probabilityPct }}% probability of attendance</div>
+          </div>
+        </div>
+
+        <!-- Score bars comparison -->
+        <div class="score-bars">
+          <div class="score-bar-row">
+            <span class="sb-lbl">Will Attend</span>
+            <div class="sb-track">
+              <div class="sb-fill attend" [style.width.%]="probabilityPct"></div>
+            </div>
+            <span class="sb-pct">{{ probabilityPct }}%</span>
+          </div>
+          <div class="score-bar-row">
+            <span class="sb-lbl">Will Not</span>
+            <div class="sb-track">
+              <div class="sb-fill noshow" [style.width.%]="100 - probabilityPct"></div>
+            </div>
+            <span class="sb-pct">{{ 100 - probabilityPct }}%</span>
+          </div>
+        </div>
+
+        <!-- Event context -->
+        <div class="context-chips" *ngIf="selectedEvent">
+          <span class="ctx-chip">📅 {{ selectedEvent.dayOfWeek }}</span>
+          <span class="ctx-chip">💻 {{ selectedEvent.mode }}</span>
+          <span class="ctx-chip">🏢 {{ selectedEvent.department }}</span>
+          <span class="ctx-chip">{{ selectedEvent.reminderSent ? '🔔 Reminder Sent' : '🔕 No Reminder' }}</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
