@@ -1,0 +1,323 @@
+<div class="att-root animate-in">
+
+  <!-- ── HERO ──────────────────────────────────────────────────── -->
+  <div class="att-hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">
+        <span class="eyebrow-dot"></span> AI Predictions
+      </div>
+      <h1 class="hero-title">Attendance Prediction</h1>
+      <p class="hero-sub">AI-powered forecast of how many people will attend your event.</p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-clock">
+        <div class="hc-time">{{ currentTime }}</div>
+        <div class="hc-label">LIVE</div>
+      </div>
+      <div class="model-badge">
+        <span class="mb-dot"></span> ML Model Active
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN LAYOUT ───────────────────────────────────────────── -->
+  <div class="att-layout">
+
+    <!-- LEFT: Config Panel -->
+    <div class="config-panel">
+
+      <!-- Event selector -->
+      <div class="cp-section">
+        <div class="cp-label">Select Event</div>
+        @if (loadingEvents) {
+          <div class="loading-select">
+            <div class="mini-spinner"></div> Loading events…
+          </div>
+        }
+        @if (!loadingEvents) {
+          <select class="ev-select" [(ngModel)]="selectedEventId" (ngModelChange)="onEventSelect()">
+           <option [ngValue]="null" disabled>— Choose an event —</option>
+            @for (ev of events; track ev.id) {
+              <option [ngValue]="ev.id">{{ ev.title }}</option>
+            }
+          </select>
+        }
+        @if (!loadingEvents && events.length === 0) {
+          <div class="no-events">No upcoming events found.</div>
+        }
+      </div>
+
+      <!-- Event quick details -->
+      @if (selectedEvent) {
+        <div class="event-detail-card">
+          <div class="edc-header">
+            <div class="edc-type-icon">
+              {{ selectedEvent.mode === 'Online' ? '💻' : selectedEvent.mode === 'Hybrid' ? '🔀' : '🏢' }}
+            </div>
+            <div class="edc-title-wrap">
+              <div class="edc-title">{{ selectedEvent.title }}</div>
+              <div class="edc-type">{{ selectedEvent.eventType }}</div>
+            </div>
+            <div class="edc-days-badge">
+              <div class="edb-val">{{ upcomingDays }}</div>
+              <div class="edb-lbl">days</div>
+            </div>
+          </div>
+          <div class="edc-grid">
+            <div class="edc-item">
+              <span class="edi-icon">📅</span>
+              <div class="edi-body">
+                <div class="edi-lbl">Date</div>
+                <div class="edi-val">{{ formatDateShort(selectedEvent.eventDate) }}</div>
+              </div>
+            </div>
+            <div class="edc-item">
+              <span class="edi-icon">🏢</span>
+              <div class="edi-body">
+                <div class="edi-lbl">Department</div>
+                <div class="edi-val">{{ selectedEvent.department }}</div>
+              </div>
+            </div>
+            <div class="edc-item">
+              <span class="edi-icon">👥</span>
+              <div class="edi-body">
+                <div class="edi-lbl">Registered</div>
+                <div class="edi-val teal">{{ selectedEvent.activeRegistrations ?? 0 }}</div>
+              </div>
+            </div>
+            <div class="edc-item">
+              <span class="edi-icon">🏟</span>
+              <div class="edi-body">
+                <div class="edi-lbl">Capacity</div>
+                <div class="edi-val">{{ selectedEvent.locationCapacity }}</div>
+              </div>
+            </div>
+            <div class="edc-item">
+              <span class="edi-icon">⭐</span>
+              <div class="edi-body">
+                <div class="edi-lbl">Speaker</div>
+                <div class="edi-val amber">{{ selectedEvent.speakerRating }}/5</div>
+              </div>
+            </div>
+            <div class="edc-item">
+              <span class="edi-icon">💰</span>
+              <div class="edi-body">
+                <div class="edi-lbl">Ticket</div>
+                <div class="edi-val">{{ selectedEvent.ticketPrice === 0 ? 'Free' : '$' + selectedEvent.ticketPrice }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Error -->
+      @if (error) {
+        <div class="att-error">
+          <span class="err-icon">⚠</span>
+          <span>{{ error }}</span>
+        </div>
+      }
+
+      <!-- Predict button -->
+      <button class="predict-btn"
+              [disabled]="!selectedEventId || loading"
+              [class.loading]="loading"
+              (click)="predict()">
+        @if (!loading) {
+          <span><span class="pb-icon">🤖</span> Predict Attendance</span>
+        }
+        @if (loading) {
+          <span class="pb-loading">
+            <span class="mini-spinner"></span> Analysing event…
+          </span>
+        }
+      </button>
+
+      <!-- AI Tip box -->
+      <div class="tip-card">
+        <div class="tip-header">
+          <span class="tip-ai-icon">💡</span>
+          <span class="tip-label">AI Insight</span>
+          <div class="tip-dots">
+            @for (t of tips; track t.text; let i = $index) {
+              <span class="tdot" [class.active]="i === currentTip"></span>
+            }
+          </div>
+        </div>
+        <div class="tip-body">
+          <span class="tip-icon">{{ tips[currentTip].icon }}</span>
+          <p class="tip-text">{{ tips[currentTip].text }}</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="results-panel">
+
+      <!-- EMPTY STATE -->
+      @if (!predicted && !loading) {
+        <div class="results-empty">
+          <div class="re-visual">
+            <div class="re-ring re-ring-1"></div>
+            <div class="re-ring re-ring-2"></div>
+            <div class="re-ring re-ring-3"></div>
+            <div class="re-center">🤖</div>
+          </div>
+          <h3 class="re-title">Ready to Predict</h3>
+          <p class="re-sub">Select an event and click Predict to get an AI-powered attendance forecast with factor analysis.</p>
+          <div class="re-chips">
+            <span class="re-chip">📈 Attendance Count</span>
+            <span class="re-chip">📊 Fill Rate Gauge</span>
+            <span class="re-chip">🔍 Factor Analysis</span>
+            <span class="re-chip">📉 No-Show Estimate</span>
+          </div>
+        </div>
+      }
+
+      <!-- LOADING -->
+      @if (loading) {
+        <div class="results-loading">
+          <div class="rl-orbs">
+            <div class="rl-orb o1"></div>
+            <div class="rl-orb o2"></div>
+            <div class="rl-orb o3"></div>
+          </div>
+          <p>Running AI prediction model…</p>
+        </div>
+      }
+
+      <!-- RESULTS -->
+      @if (predicted && !loading && result) {
+        <div class="results-content animate-in">
+
+          <!-- Stat cards -->
+          <div class="result-stats">
+            <div class="rs-card rs-main">
+              <div class="rs-glow"></div>
+              <div class="rs-icon-wrap">🎯</div>
+              <div class="rs-number">{{ displayAttendance }}</div>
+              <div class="rs-label">Expected Attendees</div>
+              <div class="rs-sub" [style.color]="fillColor">{{ fillLabel }}</div>
+            </div>
+            <div class="rs-card">
+              <div class="rs-icon-sm">📊</div>
+              <div class="rs-num-sm" [style.color]="fillColor">{{ displayFillRate }}%</div>
+              <div class="rs-lbl-sm">Venue Fill Rate</div>
+              <div class="rs-bar">
+                <div class="rs-bar-fill" [style.width.%]="displayFillRate" [style.background]="fillColor"></div>
+              </div>
+            </div>
+            <div class="rs-card">
+              <div class="rs-icon-sm">🚫</div>
+              <div class="rs-num-sm" style="color:var(--rose-500)">{{ displayNoShows }}</div>
+              <div class="rs-lbl-sm">Expected No-Shows</div>
+              <div class="rs-sub-sm">From {{ selectedEvent?.activeRegistrations ?? 0 }} registered</div>
+            </div>
+            <div class="rs-card">
+              <div class="rs-icon-sm">🪑</div>
+              <div class="rs-num-sm" style="color:var(--amber-400)">{{ displayEmpty }}</div>
+              <div class="rs-lbl-sm">Empty Seats</div>
+              <div class="rs-sub-sm">Of {{ selectedEvent?.locationCapacity }} total</div>
+            </div>
+          </div>
+
+          <!-- Confidence row -->
+          <div class="confidence-row">
+            <div class="conf-item">
+              <span class="conf-label">Prediction for</span>
+              <span class="conf-event">{{ selectedEvent?.title }}</span>
+            </div>
+            <div class="conf-item">
+              <span class="conf-label">Model Confidence</span>
+              <span class="conf-val" [style.color]="confidenceColor">{{ confidenceLevel }}</span>
+            </div>
+            <div class="conf-item">
+              <span class="conf-label">Event Date</span>
+              <span class="conf-val teal">{{ formatDateShort(selectedEvent?.eventDate ?? '') }}</span>
+            </div>
+            <div class="conf-item">
+              <span class="conf-label">Mode</span>
+              <span class="conf-val">{{ selectedEvent?.mode }}</span>
+            </div>
+          </div>
+
+          <!-- Charts row -->
+          <div class="charts-row">
+            <div class="chart-card gauge-card">
+              <div class="cc-header">
+                <span class="cc-icon">🎯</span>
+                <div class="cc-title">Fill Rate Gauge</div>
+              </div>
+              <div class="gauge-wrap">
+                <canvas #gaugeCanvas class="gauge-canvas"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="cc-header">
+                <span class="cc-icon">📊</span>
+                <div class="cc-title">Capacity vs Registered vs Predicted</div>
+              </div>
+              <div class="compare-wrap">
+                <canvas #compareCanvas class="compare-canvas"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="cc-header">
+                <span class="cc-icon">🔍</span>
+                <div class="cc-title">Factor Impact Score</div>
+              </div>
+              <div class="factor-wrap">
+                <canvas #factorCanvas class="factor-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Factor cards -->
+          <div class="factor-section">
+            <h3 class="factor-title">Prediction Factors</h3>
+            <div class="factor-grid">
+              @for (f of factorCards; track f.label) {
+                <div class="factor-card">
+                  <div class="fc-left">
+                    <div class="fc-icon">{{ f.icon }}</div>
+                    <div class="fc-body">
+                      <div class="fc-label">{{ f.label }}</div>
+                      <div class="fc-desc">{{ f.desc }}</div>
+                    </div>
+                  </div>
+                  <div class="fc-right">
+                    <div class="fc-value">{{ f.value }}</div>
+                    <div class="fc-impact"
+                         [class.impact-high]="f.impact==='high'"
+                         [class.impact-medium]="f.impact==='medium'"
+                         [class.impact-low]="f.impact==='low'"
+                         [class.impact-negative]="f.impact==='negative'">
+                      {{ f.impact === 'high' ? '↑ Positive' : f.impact === 'medium' ? '→ Neutral' : f.impact === 'low' ? '↓ Low' : '↓ Negative' }}
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Resource planning tip -->
+          <div class="resource-tip">
+            <div class="rt-icon">📦</div>
+            <div class="rt-body">
+              <div class="rt-title">Plan your resources</div>
+              <div class="rt-sub">
+                Based on <strong>{{ result.predictedAttendance }}</strong> expected attendees —
+                visit Resource Planning to auto-calculate chairs, catering, and staffing.
+              </div>
+            </div>
+            <a routerLink="/app/resource-planning" class="rt-btn">Plan Resources →</a>
+          </div>
+
+        </div>
+      }
+
+    </div>
+  </div>
+</div>
+

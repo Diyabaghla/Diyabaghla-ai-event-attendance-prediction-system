@@ -1,0 +1,260 @@
+<div class="noshow-root animate-in">
+
+  <!-- ── HERO ─────────────────────────────────────────────────── -->
+  <div class="noshow-hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow"><span class="eyebrow-dot"></span> AI Predictions</div>
+      <h1 class="hero-title">No-Show Prediction</h1>
+      <p class="hero-sub">Predict whether registrants will actually attend your event.</p>
+    </div>
+    <div class="hero-right">
+      <div class="hero-clock">
+        <div class="hc-time">{{ currentTime }}</div>
+        <div class="hc-label">LIVE</div>
+      </div>
+      <div class="model-badge"><span class="mb-dot"></span> ML Model Active</div>
+    </div>
+  </div>
+
+  <!-- ── LAYOUT ────────────────────────────────────────────────── -->
+  <div class="noshow-layout">
+
+    <!-- LEFT: Config -->
+    <div class="config-panel">
+
+      <!-- Event selector -->
+      <div class="cp-section">
+        <div class="cp-label">Select Event</div>
+        @if (loadingEvents) {
+          <div class="loading-row">
+            <div class="mini-spinner"></div> Loading events…
+          </div>
+        }
+        @if (!loadingEvents) {
+          <select class="ev-select" [(ngModel)]="selectedEventId" (ngModelChange)="onEventSelect()">
+            <option [ngValue]="null" disabled>— Choose an event —</option>
+            @for (ev of events; track ev.id) {
+              <option [ngValue]="ev.id">{{ ev.title }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      <!-- Event card -->
+      @if (selectedEvent) {
+        <div class="event-card">
+          <div class="ec-header">
+            <div class="ec-mode-icon">
+              {{ selectedEvent.mode==='Online'?'💻':selectedEvent.mode==='Hybrid'?'🔀':'🏢' }}
+            </div>
+            <div class="ec-title-block">
+              <div class="ec-title">{{ selectedEvent.title }}</div>
+              <div class="ec-type">{{ selectedEvent.eventType }}</div>
+            </div>
+            <div class="ec-days">
+              <div class="ecd-val">{{ upcomingDays }}</div>
+              <div class="ecd-lbl">days</div>
+            </div>
+          </div>
+          <div class="ec-grid">
+            <div class="ec-item">
+              <span class="eci-icon">📅</span>
+              <div><div class="eci-lbl">Date</div><div class="eci-val">{{ formatDateShort(selectedEvent.eventDate) }}</div></div>
+            </div>
+            <div class="ec-item">
+              <span class="eci-icon">🏢</span>
+              <div><div class="eci-lbl">Department</div><div class="eci-val">{{ selectedEvent.department }}</div></div>
+            </div>
+            <div class="ec-item">
+              <span class="eci-icon">👥</span>
+              <div><div class="eci-lbl">Registered</div><div class="eci-val teal">{{ selectedEvent.activeRegistrations ?? 0 }}</div></div>
+            </div>
+            <div class="ec-item">
+              <span class="eci-icon">⭐</span>
+              <div><div class="eci-lbl">Speaker</div><div class="eci-val amber">{{ selectedEvent.speakerRating }}/5</div></div>
+            </div>
+            <div class="ec-item">
+              <span class="eci-icon">💰</span>
+              <div><div class="eci-lbl">Ticket</div><div class="eci-val">{{ selectedEvent.ticketPrice===0?'Free':'$'+selectedEvent.ticketPrice }}</div></div>
+            </div>
+            <div class="ec-item">
+              <span class="eci-icon">📊</span>
+              <div><div class="eci-lbl">Past Rate</div><div class="eci-val">{{ (selectedEvent.pastAttendanceRate*100).toFixed(0) }}%</div></div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Error -->
+      @if (error) {
+        <div class="att-error"><span>⚠</span> {{ error }}</div>
+      }
+
+      <!-- Predict button -->
+      <button class="predict-btn" [disabled]="!selectedEventId||loading" [class.loading]="loading" (click)="predict()">
+        @if (!loading) {
+          <span><span class="pb-icon">🚫</span> Predict No-Show Risk</span>
+        }
+        @if (loading) {
+          <span class="btn-loading"><span class="mini-spinner"></span> Analysing…</span>
+        }
+      </button>
+
+      <!-- Risk legend -->
+      <div class="risk-legend">
+        <div class="rl-label">Risk Scale</div>
+        @for (r of riskLevels; track r.label; let i = $index) {
+          <div class="rl-item" [class.active]="predicted && i === (5 - riskLevels.indexOf(r) - 1)">
+            <div class="rl-dot" [style.background]="r.color"></div>
+            <div class="rl-body">
+              <div class="rl-name">{{ r.label }}</div>
+              <div class="rl-range">{{ r.range }}</div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Tips -->
+      <div class="tip-card">
+        <div class="tip-header">
+          <span class="tip-ai">💡</span>
+          <span class="tip-lbl">AI Insight</span>
+          <div class="tip-dots">
+            @for (t of tips; track t.text; let i = $index) {
+              <span class="td" [class.active]="i===currentTip"></span>
+            }
+          </div>
+        </div>
+        <div class="tip-body">
+          <span class="tip-icon">{{ tips[currentTip].icon }}</span>
+          <p class="tip-text">{{ tips[currentTip].text }}</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="results-panel">
+
+      <!-- Empty state -->
+      @if (!predicted && !loading) {
+        <div class="empty-state">
+          <div class="es-visual">
+            <div class="es-ring es-ring-1"></div>
+            <div class="es-ring es-ring-2"></div>
+            <div class="es-center">🚫</div>
+          </div>
+          <h3>Ready to Analyse</h3>
+          <p>Select an event and click Predict to see no-show risk analysis with factor breakdown.</p>
+          <div class="es-chips">
+            <span class="es-chip">🎯 Probability Ring</span>
+            <span class="es-chip">📊 Risk Distribution</span>
+            <span class="es-chip">🕸 Factor Radar</span>
+            <span class="es-chip">💡 Recommendations</span>
+          </div>
+        </div>
+      }
+
+      <!-- Loading -->
+      @if (loading) {
+        <div class="result-loading">
+          <div class="rl-orbs">
+            <div class="rlo o1"></div>
+            <div class="rlo o2"></div>
+            <div class="rlo o3"></div>
+          </div>
+          <p>Running no-show prediction model…</p>
+        </div>
+      }
+
+      <!-- Results -->
+      @if (predicted && !loading && result) {
+        <div class="results-content animate-in">
+
+          <!-- Verdict banner -->
+          <div class="verdict-banner" [class.attend]="willAttend" [class.noshow]="!willAttend">
+            <div class="vb-icon">{{ willAttend ? '✅' : '⚠' }}</div>
+            <div class="vb-body">
+              <div class="vb-label">AI Prediction</div>
+              <div class="vb-verdict">{{ willAttend ? 'Will Attend' : 'Risk of No-Show' }}</div>
+            </div>
+            <div class="vb-risk">
+              <div class="vbr-label">{{ riskLabel }}</div>
+              <div class="vbr-prob" [style.color]="riskColor">{{ displayProb }}%</div>
+            </div>
+          </div>
+
+          <!-- Risk desc -->
+          <div class="risk-desc-bar">
+            <span class="rdb-icon" [style.color]="riskColor">●</span>
+            <span class="rdb-text">{{ riskDesc }}</span>
+          </div>
+
+          <!-- 3 Charts row -->
+          <div class="charts-row">
+            <div class="chart-card">
+              <div class="cc-hdr"><span>🎯</span><span class="cc-title">Attend Probability</span></div>
+              <div class="prob-wrap"><canvas #probCanvas class="prob-canvas"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="cc-hdr"><span>📊</span><span class="cc-title">Risk Distribution</span></div>
+              <div class="hist-wrap"><canvas #histCanvas class="hist-canvas"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="cc-hdr"><span>🕸</span><span class="cc-title">Factor Radar</span></div>
+              <div class="radar-wrap"><canvas #radarCanvas class="radar-canvas"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Stat row -->
+          <div class="stat-row">
+            <div class="sr-card">
+              <div class="src-icon" [style.color]="riskColor">{{ displayProb }}%</div>
+              <div class="src-lbl">Attendance Probability</div>
+            </div>
+            <div class="sr-card">
+              <div class="src-icon" style="color:var(--amber-400)">{{ riskLabel }}</div>
+              <div class="src-lbl">Risk Level</div>
+            </div>
+            <div class="sr-card">
+              <div class="src-icon" [style.color]="willAttend ? 'var(--green-500)' : 'var(--rose-500)'">
+                {{ willAttend ? 'Attend' : 'No-Show' }}
+              </div>
+              <div class="src-lbl">Predicted Outcome</div>
+            </div>
+            <div class="sr-card">
+              <div class="src-icon" style="color:var(--teal-400)">{{ selectedEvent?.activeRegistrations ?? 0 }}</div>
+              <div class="src-lbl">Total Registered</div>
+            </div>
+          </div>
+
+          <!-- Recommendations -->
+          <div class="recs-section">
+            <h3 class="recs-title">💡 Recommendations</h3>
+            <div class="recs-grid">
+              @for (r of recommendations; track r.text; let i = $index) {
+                <div class="rec-card" [style.animation-delay]="(i*0.07)+'s'">
+                  <div class="rec-icon">{{ r.icon }}</div>
+                  <div class="rec-text">{{ r.text }}</div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Resource tip -->
+          <div class="resource-tip">
+            <div class="rt-icon">📦</div>
+            <div class="rt-body">
+              <div class="rt-title">Plan for the outcome</div>
+              <div class="rt-sub">Use Resource Planning to prepare for the predicted attendance scenario.</div>
+            </div>
+            <a routerLink="/app/resource-planning" class="rt-btn">Plan Resources →</a>
+          </div>
+
+        </div>
+      }
+
+    </div>
+  </div>
+</div>
+
