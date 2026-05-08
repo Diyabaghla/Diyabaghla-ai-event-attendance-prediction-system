@@ -11,33 +11,64 @@ namespace EventPredictionAPI.Controllers;
 public class ReportsController : ControllerBase
 {
     private readonly IReportService _reports;
-
     public ReportsController(IReportService reports) => _reports = reports;
 
-    /// <summary>Get attendance vs registration data for all events.</summary>
     [HttpGet("attendance-vs-registration")]
-    [ProducesResponseType(typeof(List<AttendanceReportItem>), 200)]
     public async Task<IActionResult> AttendanceVsRegistration()
-    {
-        var result = await _reports.GetAttendanceVsRegistrationAsync();
-        return Ok(result);
-    }
+        => Ok(await _reports.GetAttendanceVsRegistrationAsync());
 
-    /// <summary>Get total cancelled vs registered count across all events.</summary>
     [HttpGet("cancelled-vs-registered")]
-    [ProducesResponseType(typeof(RegistrationStatusReport), 200)]
     public async Task<IActionResult> CancelledVsRegistered()
+        => Ok(await _reports.GetCancelledVsRegisteredAsync());
+
+    [HttpGet("event-performance")]
+    public async Task<IActionResult> EventPerformance()
+        => Ok(await _reports.GetEventPerformanceAsync());
+
+    [HttpGet("top-stats")]
+    public async Task<IActionResult> TopStats()
+        => Ok(await _reports.GetTopStatsAsync());
+
+    [HttpGet("department-breakdown")]
+    public async Task<IActionResult> DepartmentBreakdown()
+        => Ok(await _reports.GetDepartmentBreakdownAsync());
+
+    [HttpGet("weekly-trend")]
+    public async Task<IActionResult> WeeklyTrend()
+        => Ok(await _reports.GetWeeklyTrendAsync());
+
+    // ── CSV Downloads ──────────────────────────────────────────
+    [HttpGet("download/event-performance-csv")]
+    public async Task<IActionResult> DownloadEventPerformanceCsv()
     {
-        var result = await _reports.GetCancelledVsRegisteredAsync();
-        return Ok(result);
+        var data = await _reports.GetEventPerformanceAsync();
+        var csv  = new System.Text.StringBuilder();
+        csv.AppendLine("Event,Department,Mode,Active Registrations,Fill Rate %,Speaker Rating,Ticket Price,Past Attendance Rate");
+        foreach (var r in data)
+            csv.AppendLine($"\"{r.EventTitle}\",{r.Department},{r.Mode},{r.ActiveRegistrations},{r.FillRate},{r.SpeakerRating},{r.TicketPrice},{r.PastAttendanceRate}");
+        return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", $"event-performance-{DateTime.Today:yyyy-MM-dd}.csv");
     }
 
-    /// <summary>Get performance metrics for all events.</summary>
-    [HttpGet("event-performance")]
-    [ProducesResponseType(typeof(List<EventPerformanceReport>), 200)]
-    public async Task<IActionResult> EventPerformance()
+    [HttpGet("download/registrations-csv")]
+    public async Task<IActionResult> DownloadRegistrationsCsv()
     {
-        var result = await _reports.GetEventPerformanceAsync();
-        return Ok(result);
+        var data = await _reports.GetAttendanceVsRegistrationAsync();
+        var csv  = new System.Text.StringBuilder();
+        csv.AppendLine("Event,Type,Date,Total Registrations,Active,Cancelled,Cancellation Rate %,Predicted Attendance");
+        foreach (var r in data)
+            csv.AppendLine($"\"{r.EventTitle}\",{r.EventType},{r.EventDate:yyyy-MM-dd},{r.TotalRegistrations},{r.ActiveRegistrations},{r.CancelledRegistrations},{r.CancellationRate},{r.PredictedAttendance}");
+        return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", $"registrations-{DateTime.Today:yyyy-MM-dd}.csv");
+    }
+
+    [HttpGet("download/department-csv")]
+    public async Task<IActionResult> DownloadDepartmentCsv()
+    {
+        var data = await _reports.GetDepartmentBreakdownAsync();
+        var csv  = new System.Text.StringBuilder();
+        csv.AppendLine("Department,Total Events,Total Registrations,Active Registrations,Avg Speaker Rating");
+        foreach (var r in data.ByDepartment)
+            csv.AppendLine($"{r.Department},{r.TotalEvents},{r.TotalRegistrations},{r.ActiveRegistrations},{r.AvgSpeakerRating}");
+        return File(System.Text.Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", $"department-report-{DateTime.Today:yyyy-MM-dd}.csv");
     }
 }
+
