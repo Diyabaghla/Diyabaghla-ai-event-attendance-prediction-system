@@ -35,7 +35,12 @@ public class CreateEventRequest
     [Required] public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     [Required] public string EventType { get; set; } = string.Empty;
-    [Required] public string Mode { get; set; } = string.Empty;
+    // [Required] public string Mode { get; set; } = string.Empty;
+    [Required]
+[RegularExpression("^(Online|Offline|Hybrid)$",
+    ErrorMessage = "Mode must be Online, Offline, or Hybrid")]
+public string Mode { get; set; } = string.Empty;
+
     [Required] public string Department { get; set; } = string.Empty;
     [Required] public DateTime EventDate { get; set; }
     [Range(0.5, 24)] public double DurationHours { get; set; }
@@ -176,4 +181,61 @@ public class EventPerformanceReport
     public double SpeakerRating { get; set; }
     public decimal TicketPrice { get; set; }
     public double PastAttendanceRate { get; set; }
+}
+public class DepartmentReport
+{
+    public List<DepartmentItem>  ByDepartment { get; set; } = new();
+    public List<ModeItem>        ByMode       { get; set; } = new();
+    public List<EventTypeItem>   ByEventType  { get; set; } = new();
+}
+public class EventTypeItem
+{
+    public string EventType  { get; set; } = "";
+    public int    EventCount { get; set; }
+    public double AvgRating  { get; set; }
+}
+public class TopStatsReport
+{
+    public int    TotalRegistrations    { get; set; }
+    public int    ActiveRegistrations   { get; set; }
+    public int    CancelledRegistrations{ get; set; }
+    public double AvgFillRate           { get; set; }
+    public int?   TopEventId            { get; set; }
+    public string TopEventTitle         { get; set; } = "";
+    public string TopEventDepartment    { get; set; } = "";
+    public string TopEventMode          { get; set; } = "";
+    public double TopEventFillRate      { get; set; }
+    public int    TopEventAttendees     { get; set; }
+    public double TopEventRating        { get; set; }
+}
+
+public class DepartmentItem
+{
+    public string Department          { get; set; } = "";
+    public int    TotalEvents         { get; set; }
+    public int    TotalRegistrations  { get; set; }
+    public int    ActiveRegistrations { get; set; }
+    public double AvgSpeakerRating    { get; set; }
+}
+
+public class ModeItem
+{
+    public string Mode       { get; set; } = "";
+    public int    EventCount { get; set; }
+    public int    Percentage { get; set; }
+}
+
+public class DepartmentBreakdownReport
+{
+    public List<DepartmentItem> ByDepartment { get; set; } = new();
+    public List<ModeItem>       ByMode       { get; set; } = new();
+}
+
+public class WeeklyTrendItem
+{
+    public DateTime WeekStart        { get; set; }
+    public string   WeekLabel        { get; set; } = "";
+    public int      Registrations    { get; set; }
+    public int      Cancellations    { get; set; }
+    public int      NetRegistrations { get; set; }
 }
