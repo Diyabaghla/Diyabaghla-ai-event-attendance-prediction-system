@@ -1,0 +1,102 @@
+<div class="notif-wrap">
+
+  <!-- ── BELL BUTTON ── -->
+  <button class="bell-btn" (click)="toggle($event)" [class.has-unread]="notifSvc.unreadCount() > 0">
+    <svg class="bell-icon" viewBox="0 0 24 24" fill="none">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
+            stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"
+            stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    @if (notifSvc.unreadCount() > 0) {
+      <span class="badge">
+        {{ notifSvc.unreadCount() > 9 ? '9+' : notifSvc.unreadCount() }}
+      </span>
+    }
+  </button>
+
+  <!-- ── DROPDOWN PANEL ── -->
+  @if (isOpen()) {
+    <div class="notif-panel" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="np-header">
+        <div class="np-title">
+          <span class="np-title-icon">🔔</span>
+          Notifications
+          @if (notifSvc.unreadCount() > 0) {
+            <span class="np-count">{{ notifSvc.unreadCount() }} new</span>
+          }
+        </div>
+        <div class="np-actions">
+          @if (notifSvc.unreadCount() > 0) {
+            <button class="np-action-btn" (click)="markAllRead($event)">Mark all read</button>
+          }
+          @if (notifSvc.notifications().length > 0) {
+            <button class="np-action-btn clear" (click)="clearAll($event)">Clear all</button>
+          }
+        </div>
+      </div>
+
+      <!-- Notification list -->
+      <div class="np-list">
+
+        @if (notifSvc.notifications().length === 0) {
+          <div class="np-empty">
+            <div class="np-empty-icon">🔕</div>
+            <p>No notifications yet</p>
+            <span>You're all caught up!</span>
+          </div>
+        }
+
+        @for (n of notifSvc.notifications(); track n.id) {
+          <div class="np-item"
+               [class.unread]="!n.isRead"
+               [style.--notif-color]="notifSvc.getColor(n.type)"
+               (click)="navigate(n)">
+
+            <!-- Left accent bar -->
+            <div class="np-accent"></div>
+
+            <!-- Icon -->
+            <div class="np-icon-wrap">
+              <span class="np-icon">{{ notifSvc.getIcon(n.type) }}</span>
+            </div>
+
+            <!-- Content -->
+            <div class="np-content">
+              <div class="np-item-title">{{ n.title }}</div>
+              <div class="np-item-msg">{{ n.message }}</div>
+              <div class="np-item-time">{{ notifSvc.timeAgo(n.createdAt) }}</div>
+            </div>
+
+            <!-- Actions -->
+            <div class="np-item-actions">
+              @if (!n.isRead) {
+                <button class="np-dot-btn" title="Mark as read"
+                        (click)="markRead(n, $event)">●</button>
+              }
+              <button class="np-remove-btn" title="Remove"
+                      (click)="remove(n, $event)">✕</button>
+            </div>
+
+          </div>
+        }
+
+      </div>
+
+      <!-- Footer -->
+      @if (notifSvc.notifications().length > 0) {
+        <div class="np-footer">
+          <span class="np-footer-text">
+            {{ notifSvc.notifications().length }} notification{{ notifSvc.notifications().length !== 1 ? 's' : '' }} total
+          </span>
+        </div>
+      }
+
+    </div>
+  }
+
+</div>
