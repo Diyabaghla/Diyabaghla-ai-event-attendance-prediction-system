@@ -27,5 +27,8 @@ import '../tests/Component-tests/landing.spec';
 import '../tests/Component-tests/resource-planning.spec';
 import '../tests/Component-tests/no-show-prediction.spec';
 import '../tests/Component-tests/signup.spec';
+import '../tests/Service-tests/toast.service.spec'
+import '../tests/Service-tests/auth.service.spec'
+import '../tests/Service-tests/notification.service.spec'
+import '../tests/Service-tests/api.services.spec'
 
-// import '../tests/auth.service.spec';
