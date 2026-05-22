@@ -4,7 +4,10 @@ import { Observable } from 'rxjs';
 import {
   Event, Registration, RegisterRequest,
   AttendancePredictionResult, NoShowPredictionResult, UserAttendancePredictionResult,
-  AttendanceReportItem, RegistrationStatusReport, EventPerformanceReport
+  AttendanceReportItem, RegistrationStatusReport, EventPerformanceReport,
+  WeeklyTrendItem,
+  DepartmentBreakdownReport,
+  TopStatsReport
 } from '../models/models';
 import { environment } from '../../environments/environment';
 
@@ -61,7 +64,7 @@ export class PredictionService {
   }
 }
 
-// ─── Reports ─────────────────────────────────────
+//─── Reports ─────────────────────────────────────
 @Injectable({ providedIn: 'root' })
 export class ReportService {
   private API = `${environment.apiUrl}/reports`;
@@ -76,4 +79,17 @@ export class ReportService {
   getEventPerformance(): Observable<EventPerformanceReport[]> {
     return this.http.get<EventPerformanceReport[]>(`${this.API}/event-performance`);
   }
+   getTopStats(): Observable<TopStatsReport> {
+  return this.http.get<TopStatsReport>(`${this.API}/top-stats`);
 }
+
+getDepartmentBreakdown(): Observable<DepartmentBreakdownReport> {
+  return this.http.get<DepartmentBreakdownReport>(`${this.API}/department-breakdown`);
+}
+
+getWeeklyTrend(): Observable<WeeklyTrendItem[]> {
+  return this.http.get<WeeklyTrendItem[]>(`${this.API}/weekly-trend`);
+}
+
+}
+
