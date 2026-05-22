@@ -41,12 +41,15 @@ public class PredictionService : IPredictionService
             .FirstOrDefaultAsync(e => e.Id == eventId)
             ?? throw new KeyNotFoundException($"Event {eventId} not found.");
 
+         // Active registrations — the real cap value
+        int activeRegistrations = ev.Registrations.Count(r => r.Status == "Registered");
+
         var payload = new
         {
             event_type = ev.EventType,
             mode = ev.Mode,
             department = ev.Department,
-            registrations = ev.Registrations.Count(r => r.Status == "Registered"),
+            registrations = activeRegistrations,
             day_of_week = ev.DayOfWeek,
             duration_hours = ev.DurationHours,
             speaker_rating = ev.SpeakerRating,
@@ -57,7 +60,13 @@ public class PredictionService : IPredictionService
             location_capacity = ev.LocationCapacity
         };
 
-        return await PostAsync<AttendancePredictionResponse>("/predict-attendance", payload);
+         var result = await PostAsync<AttendancePredictionResponse>("/predict-attendance", payload);
+        // ✅ Cap prediction — cannot exceed actual registrations
+        if (activeRegistrations > 0 && result.PredictedAttendance > activeRegistrations)
+        {
+            result.PredictedAttendance = activeRegistrations;
+        }
+        return result;
     }
 
     // ── /predict-no-show ──────────────────────────────────────────

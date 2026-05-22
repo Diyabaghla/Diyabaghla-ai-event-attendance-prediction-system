@@ -25,6 +25,11 @@ public class RegistrationService : IRegistrationService
         var ev = await _db.Events.FindAsync(req.EventId)
             ?? throw new KeyNotFoundException($"Event {req.EventId} not found.");
 
+         // ── ADD THIS BLOCK ──────────────────────────────────────────
+    if (ev.EventDate < DateTime.UtcNow)
+        throw new InvalidOperationException("This event has already ended. Registration is closed.");
+    // ────────────────────────────────────────────────────────────
+
         var existing = await _db.Registrations
             .FirstOrDefaultAsync(r => r.UserId == userId && r.EventId == req.EventId);
 
