@@ -16,8 +16,7 @@
   background: linear-gradient(160deg, #080f18 0%, #0a1628 50%, #06121e 100%);
   display: flex; align-items: center; justify-content: center;
   padding: 60px 48px;
-  @media(max-width: 860px) { display: none; }
-
+  @media(max-width: 860px) { flex-direction: column;}
   &::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
     background: linear-gradient(90deg, var(--teal-500), var(--amber-400), var(--teal-300));
