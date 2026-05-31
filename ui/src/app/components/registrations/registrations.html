@@ -150,7 +150,9 @@
   <!-- ── TABLE VIEW ─────────────────────────────────────────── -->
   @if (!loading && filtered.length > 0 && viewMode === 'table') {
     <div class="table-card">
-      <table class="regs-table">
+      <div class="table-scroll-wrap">
+
+         <table class="regs-table">
         <thead>
           <tr>
             <th class="sortable" (click)="setSort('event')">
@@ -251,6 +253,7 @@
           }
         </tbody>
       </table>
+    </div>
     </div>
   }
 

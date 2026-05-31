@@ -230,6 +230,7 @@
 
   <!-- ── LIST VIEW ─────────────────────────────────────────── -->
   @if (!loading && filteredEvents.length > 0 && viewMode === 'list') {
+    <div class="events-list-wrap">
     <div class="events-list">
       @for (ev of filteredEvents; track ev.id) {
         <div class="list-item">
@@ -262,6 +263,7 @@
           </div>
         </div>
       }
+    </div>
     </div>
   }
 

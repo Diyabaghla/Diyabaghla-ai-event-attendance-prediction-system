@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit,ChangeDetectorRef} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EventService, PredictionService } from '../../../services/api.services';
@@ -19,7 +19,7 @@ export class UserAttendancePrediction implements OnInit {
   loadingEvents = true;
   error = '';
 
-  constructor(private eventSvc: EventService, private predSvc: PredictionService) {}
+  constructor(private eventSvc: EventService, private predSvc: PredictionService,private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.eventSvc.getAll().subscribe({
@@ -31,15 +31,40 @@ export class UserAttendancePrediction implements OnInit {
   onSelect(): void { this.result = null; this.error = ''; }
 
   predict(): void {
-    if (!this.selectedEventId) return;
-    this.loading = true; this.error = ''; this.result = null;
-    this.predSvc.predictUserAttendance(Number(this.selectedEventId)).subscribe({
-      next: r => { this.result = r; this.loading = false; },
-      error: err => { this.error = err.error?.message || 'Prediction failed.'; this.loading = false; }
-    });
-  }
+  if (!this.selectedEventId) return;
 
-  get probabilityPct(): number { return Math.round((this.result?.probability ?? 0) * 100); }
+  this.loading = true;
+  this.error = '';
+  this.result = null;
+
+  this.predSvc.predictUserAttendance(Number(this.selectedEventId)).subscribe({
+    next: r => {
+      console.log('USER PREDICTION:', r);
+
+      this.result = {
+        ...r,
+        probability: Number(r.probability) || 0
+      };
+
+      this.loading = false;
+      this.cdr.detectChanges();
+
+      // 🔥 Force UI update (VERY IMPORTANT)
+      setTimeout(() => {
+        // trigger Angular refresh
+      }, 0);
+    },
+    error: err => {
+      console.error(err);
+      this.error = err.error?.message || 'Prediction failed.';
+      this.loading = false;
+    }
+  });
+}
+
+  get probabilityPct(): number {
+  return Math.round((this.result?.probability || 0) * 100);
+}
   get probabilityLevel(): string {
     const p = this.probabilityPct;
     if (p >= 80) return 'High'; if (p >= 50) return 'Medium'; return 'Low';
@@ -53,6 +78,10 @@ export class UserAttendancePrediction implements OnInit {
     if (p >= 80) return '🟢'; if (p >= 50) return '🟡'; return '🔴';
   }
   get circumference(): number { return 2 * Math.PI * 54; }
-  get dashoffset(): number { return this.circumference * (1 - (this.result?.probability ?? 0)); }
-  get selectedEvent(): Event | undefined { return this.events.find(e => e.id === Number(this.selectedEventId)); }
+  get dashoffset(): number {
+  return this.circumference * (1 - (this.result?.probability || 0));
+}
+  get selectedEvent(): Event | null {
+  return this.events.find(e => e.id === Number(this.selectedEventId)) || null;
+}
 }

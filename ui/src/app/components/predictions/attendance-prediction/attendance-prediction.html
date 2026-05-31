@@ -188,7 +188,7 @@
       }
 
       <!-- RESULTS -->
-      @if (predicted && !loading && result) {
+    @if (predicted && !loading && result){
         <div class="results-content animate-in">
 
           <!-- Stat cards -->
@@ -196,13 +196,17 @@
             <div class="rs-card rs-main">
               <div class="rs-glow"></div>
               <div class="rs-icon-wrap">🎯</div>
-              <div class="rs-number">{{ displayAttendance }}</div>
+       <div class="rs-number">
+  {{ displayAttendance === 0 ? '—' : displayAttendance }}
+</div>
               <div class="rs-label">Expected Attendees</div>
               <div class="rs-sub" [style.color]="fillColor">{{ fillLabel }}</div>
             </div>
             <div class="rs-card">
               <div class="rs-icon-sm">📊</div>
-              <div class="rs-num-sm" [style.color]="fillColor">{{ displayFillRate }}%</div>
+       <div class="rs-num-sm">
+  {{ displayFillRate === 0 ? '—' : displayFillRate + '%' }}
+</div>
               <div class="rs-lbl-sm">Venue Fill Rate</div>
               <div class="rs-bar">
                 <div class="rs-bar-fill" [style.width.%]="displayFillRate" [style.background]="fillColor"></div>
@@ -210,13 +214,17 @@
             </div>
             <div class="rs-card">
               <div class="rs-icon-sm">🚫</div>
-              <div class="rs-num-sm" style="color:var(--rose-500)">{{ displayNoShows }}</div>
+         <div class="rs-num-sm">
+  {{ displayNoShows === 0 ? '—' : displayNoShows }}
+</div>
               <div class="rs-lbl-sm">Expected No-Shows</div>
               <div class="rs-sub-sm">From {{ selectedEvent?.activeRegistrations ?? 0 }} registered</div>
             </div>
             <div class="rs-card">
               <div class="rs-icon-sm">🪑</div>
-              <div class="rs-num-sm" style="color:var(--amber-400)">{{ displayEmpty }}</div>
+              <div class="rs-num-sm">
+  {{ displayEmpty === 0 ? '—' : displayEmpty }}
+</div>
               <div class="rs-lbl-sm">Empty Seats</div>
               <div class="rs-sub-sm">Of {{ selectedEvent?.locationCapacity }} total</div>
             </div>

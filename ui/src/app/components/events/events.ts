@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -44,6 +45,7 @@ export class Events implements OnInit {
     private regSvc: RegistrationService,
     public  auth: AuthService,
     private toast: ToastService,
+    private cd: ChangeDetectorRef ,
     private notifSvc:NotificationService
   ) {
     this.form = this.fb.group({
@@ -65,13 +67,30 @@ export class Events implements OnInit {
 
   ngOnInit(): void { this.loadEvents(); }
 
-  loadEvents(): void {
-    this.loading = true; this.error = '';
-    this.eventSvc.getAll().subscribe({
-      next: evs => { this.events = evs || []; this.applyFilter(); this.loading = false; },
-      error: () => { this.error = 'Failed to load events.'; this.loading = false; this.events = []; this.filteredEvents = []; }
-    });
-  }
+ loadEvents(): void {
+  this.loading = true;
+  this.error = '';
+
+  this.eventSvc.getAll().subscribe({
+    next: (evs) => {
+      this.events = evs || [];
+      this.applyFilter();
+
+      this.loading = false;
+
+      // ✅ FORCE UI UPDATE (CRITICAL FIX)
+      this.cd.detectChanges();
+    },
+    error: () => {
+      this.error = 'Failed to load events.';
+      this.loading = false;
+      this.events = [];
+      this.filteredEvents = [];
+
+      this.cd.detectChanges(); // ✅ also here
+    }
+  });
+}
 
   applyFilter(): void {
     let list = [...this.events];
@@ -114,6 +133,7 @@ export class Events implements OnInit {
     op.subscribe({
       next: (saved) => {
         this.saving = false; this.closeModal(); this.loadEvents();
+         this.cd.detectChanges(); 
        
       if (!this.editMode) {
         this.toast.success(`Event "${saved.title}" created successfully! 🎉`);

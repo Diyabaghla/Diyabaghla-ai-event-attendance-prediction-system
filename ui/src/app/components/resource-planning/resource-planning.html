@@ -197,7 +197,7 @@
             <!-- Summary stats -->
             <div class="summary-stats">
               <div class="ss-card">
-                <div class="ss-val" style="color:var(--teal-400)">{{ attendanceCount }}</div>
+                <div class="ss-val" style="color:var(--teal-400)">{{ attendanceValue }}</div>
                 <div class="ss-lbl">Expected Attendees</div>
               </div>
               <div class="ss-card">
@@ -209,7 +209,7 @@
                 <div class="ss-lbl">Total Staff Required</div>
               </div>
               <div class="ss-card">
-                <div class="ss-val" [style.color]="capacityColor">{{ capacityFill }}%</div>
+                <div class="ss-val" [style.color]="capacityColor">{{ capacityFillValue  }}%</div>
                 <div class="ss-lbl">Venue Fill Rate</div>
                 <div class="capacity-bar">
                   <div class="capacity-fill"

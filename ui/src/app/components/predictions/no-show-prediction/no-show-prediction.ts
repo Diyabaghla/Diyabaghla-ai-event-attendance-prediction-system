@@ -83,23 +83,53 @@ export class NoShowPrediction implements OnInit, AfterViewInit, OnDestroy {
       { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
-  onEventSelect(): void {
-    this.selectedEvent = this.events.find(e => e.id === Number(this.selectedEventId)) ?? null;
-    this.result = null; this.predicted = false; this.error = ''; this.displayProb = 0;
-  }
+ onEventSelect(): void {
+  this.selectedEvent =
+    this.events.find(e => e.id === Number(this.selectedEventId)) ?? null;
+
+  this.result = null;
+  this.predicted = false;
+  this.error = '';
+
+  this.displayProb = 0;
+
+  this.cdr.detectChanges();
+}
 
   predict(): void {
     if (!this.selectedEventId) return;
     this.loading = true; this.error = ''; this.result = null; this.predicted = false;
     this.predSvc.predictNoShow(Number(this.selectedEventId)).subscribe({
-      next: r => {
-        this.result = r; this.loading = false; this.predicted = true;
-        this.cdr.detectChanges();
-        this.animateCounter();
-        requestAnimationFrame(() => requestAnimationFrame(() =>
-          setTimeout(() => { this.drawProbRing(); this.drawHistogram(); this.drawRadar(); }, 80)
-        ));
-      },
+    next: r => {
+  console.log('RAW RESPONSE:', r);
+
+ const probability =
+  r.probability !== undefined && r.probability !== null
+    ? Number(r.probability)
+    : (r as any).probability_pct !== undefined
+    ? Number((r as any).probability_pct) / 100
+    : 0;
+
+  this.result = {
+    ...r,
+    probability: probability
+  };
+
+  this.loading = false;
+  this.predicted = true;
+
+  this.cdr.detectChanges();
+
+  setTimeout(() => {
+    this.animateCounter();
+
+    requestAnimationFrame(() => {
+      this.drawProbRing();
+      this.drawHistogram();
+      this.drawRadar();
+    });
+  }, 150);
+},
       error: err => {
         this.error   = err.error?.message || 'Prediction failed. Make sure FastAPI is running on port 8000.';
         this.loading = false;
@@ -108,13 +138,22 @@ export class NoShowPrediction implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private animateCounter(): void {
-    const target = this.probabilityPct; const steps = 50; let step = 0;
-    const timer = setInterval(() => {
-      step++;
-      this.displayProb = Math.round(target * (1 - Math.pow(1 - step/steps, 3)));
-      if (step >= steps) clearInterval(timer);
-    }, 1400/steps);
-  }
+  const target = this.probabilityPct;
+  const steps = 40;
+  let step = 0;
+
+  const timer = setInterval(() => {
+    step++;
+    const ease = step / steps;
+
+    this.displayProb = Math.round(target * ease);
+
+    if (step >= steps) {
+      this.displayProb = target; // ✅ force final value
+      clearInterval(timer);
+    }
+  }, 1200 / steps);
+}
 
   drawProbRing(): void {
     const canvas = this.probCanvas?.nativeElement;
@@ -266,6 +305,7 @@ export class NoShowPrediction implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get recommendations(): { icon: string; text: string }[] {
+    if (!this.selectedEvent) return []; 
     const p=this.probabilityPct, ev=this.selectedEvent;
     const recs: {icon:string;text:string}[]=[];
     if (p<70) recs.push({icon:'🔔',text:'Send a reminder email to all registered attendees.'});

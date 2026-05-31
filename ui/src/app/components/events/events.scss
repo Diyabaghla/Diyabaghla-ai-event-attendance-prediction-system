@@ -184,7 +184,22 @@
   &:hover { background:rgba(244,63,94,0.18); } }
 
 // ── List View ─────────────────────────────────────────────────────────────────
-.events-list { display:flex;flex-direction:column;gap:8px; }
+.events-list-wrap{
+  overflow-x: auto ;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+
+  &::-webkit-scrollbar{
+    height: 5px;
+  }
+  &::-webkit-scrollbar-track{
+    background: var(--bg-elevated); border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb{
+    background: var(--border-strong); border-radius: 3px;
+  }
+}
+.events-list { display:flex;flex-direction:column;gap:8px; min-width: 680px; }
 .list-item   { display:flex;align-items:center;gap:14px;
   background:var(--bg-card);border:1px solid var(--border);
   border-radius:var(--radius-md);padding:14px 18px;transition:all 0.2s;

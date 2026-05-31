@@ -89,48 +89,108 @@ export class AttendancePrediction implements OnInit, AfterViewInit, OnDestroy {
       { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
-  onEventSelect(): void {
-    this.selectedEvent = this.events.find(e => e.id === Number(this.selectedEventId)) ?? null;
-    this.result = null; this.predicted = false; this.error = '';
-    this.displayAttendance = this.displayFillRate = this.displayNoShows = this.displayEmpty = 0;
-  }
+onEventSelect(): void {
+  this.selectedEvent =
+    this.events.find(e => e.id === Number(this.selectedEventId)) ?? null;
+
+  console.log('Selected Event:', this.selectedEvent);
+
+  this.result = null;
+  this.predicted = false;
+  this.error = '';
+
+  // Reset UI safely
+  this.displayAttendance = 0;
+  this.displayFillRate = 0;
+  this.displayNoShows = 0;
+  this.displayEmpty = 0;
+
+  this.cdr.detectChanges();
+}
 
   predict(): void {
-    if (!this.selectedEventId) return;
-    this.loading = true; this.error = ''; this.result = null; this.predicted = false;
-    this.predSvc.predictAttendance(Number(this.selectedEventId)).subscribe({
-      next: r => {
-        this.result = r; this.loading = false; this.predicted = true;
-        this.cdr.detectChanges();
-        this.animateCounters();
-        requestAnimationFrame(() => requestAnimationFrame(() =>
-          setTimeout(() => {
-            this.drawGauge(); this.drawFactorChart(); this.drawCompareChart();
-          }, 80)
-        ));
-      },
-      error: err => {
-        this.error   = err.error?.message || 'Prediction failed. Make sure FastAPI is running on port 8000.';
-        this.loading = false;
-      }
-    });
-  }
+  if (!this.selectedEventId) return;
 
-  private animateCounters(): void {
-    if (!this.result || !this.selectedEvent) return;
-    const tA = this.result.predictedAttendance, tF = this.fillRate,
-          tN = this.noShowCount, tE = Math.max(0, this.selectedEvent.locationCapacity - tA);
-    const steps = 50; let step = 0;
-    const timer = setInterval(() => {
-      step++;
-      const ease = 1 - Math.pow(1 - step / steps, 3);
-      this.displayAttendance = Math.round(tA * ease);
-      this.displayFillRate   = Math.round(tF * ease);
-      this.displayNoShows    = Math.round(tN * ease);
-      this.displayEmpty      = Math.round(tE * ease);
-      if (step >= steps) clearInterval(timer);
-    }, 1400 / steps);
-  }
+  this.loading = true;
+  this.error = '';
+  this.result = null;
+  this.predicted = false;
+
+  forkJoin({
+    events: this.eventSvc.getAll(),
+    prediction: this.predSvc.predictAttendance(Number(this.selectedEventId))
+  }).subscribe({
+    next: ({ events, prediction }) => {
+  this.events = events || [];
+
+  this.selectedEvent =
+    this.events.find(e => e.id === Number(this.selectedEventId)) ?? null;
+
+  const predicted =
+    prediction.predictedAttendance ||
+    (prediction as any).predicted_attendance ||
+    0;
+
+  this.result = {
+  ...prediction,
+  predictedAttendance: predicted
+};
+
+// ✅ SET values immediately (prevents 0 flash)
+this.displayAttendance = predicted;
+this.displayFillRate = this.fillRate;
+this.displayNoShows = this.noShowCount;
+this.displayEmpty =
+  (this.selectedEvent?.locationCapacity || 0) - predicted;
+
+this.loading = false;
+this.predicted = true;
+
+this.cdr.detectChanges();
+
+// THEN animate (optional)
+setTimeout(() => {
+  this.animateCounters();
+  requestAnimationFrame(() => {
+    this.drawGauge();
+    this.drawFactorChart();
+    this.drawCompareChart();
+  });
+}, 100);
+},
+    error: err => {
+      console.error(err);
+      this.error = 'Prediction failed';
+      this.loading = false;
+    }
+  });
+}
+private animateCounters(): void {
+  if (!this.result || !this.selectedEvent) return;
+
+  const tA = Number(this.result.predictedAttendance) || 0;
+const capacity = Number(this.selectedEvent.locationCapacity) || 0;
+const registered = Number(this.selectedEvent.activeRegistrations) || 0;
+
+  const tF = capacity ? Math.round((tA / capacity) * 100) : 0;
+  const tN = Math.max(0, registered - tA);
+  const tE = Math.max(0, capacity - tA);
+
+  const steps = 50;
+  let step = 0;
+
+  const timer = setInterval(() => {
+    step++;
+    const ease = 1 - Math.pow(1 - step / steps, 3);
+
+    this.displayAttendance = Math.round(tA * ease);
+    this.displayFillRate = Math.round(tF * ease);
+    this.displayNoShows = Math.round(tN * ease);
+    this.displayEmpty = Math.round(tE * ease);
+
+    if (step >= steps) clearInterval(timer);
+  }, 1400 / steps);
+}
 
   drawGauge(): void {
     const canvas = this.gaugeCanvas?.nativeElement;
@@ -236,14 +296,22 @@ export class AttendancePrediction implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  get fillRate(): number {
-    if (!this.result||!this.selectedEvent) return 0;
-    return Math.min(100,Math.round((this.result.predictedAttendance/this.selectedEvent.locationCapacity)*100));
-  }
-  get noShowCount(): number {
-    if (!this.result||!this.selectedEvent) return 0;
-    return Math.max(0,(this.selectedEvent.activeRegistrations??0)-this.result.predictedAttendance);
-  }
+get fillRate(): number {
+  if (!this.result || !this.selectedEvent) return 0;
+
+  const capacity = Number(this.selectedEvent.locationCapacity) || 1;
+  const predicted = Number(this.result.predictedAttendance) || 0;
+
+  return Math.min(100, Math.round((predicted / capacity) * 100));
+}
+get noShowCount(): number {
+  if (!this.result || !this.selectedEvent) return 0;
+
+  const registered = Number(this.selectedEvent.activeRegistrations) || 0;
+  const predicted = Number(this.result.predictedAttendance) || 0;
+
+  return Math.max(0, registered - predicted);
+}
   get fillColor(): string {
     const p=this.fillRate; return p>=90?'var(--rose-500)':p>=60?'var(--amber-400)':'var(--green-500)';
   }

@@ -1,5 +1,5 @@
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit,ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EventService, PredictionService } from '../../services/api.services';
@@ -31,6 +31,8 @@ export interface ResourceCategory {
   styleUrls: ['./resource-planning.scss']
 })
 export class ResourcePlanning implements OnInit {
+  attendanceValue = 0;
+capacityFillValue = 0;
   events: Event[] = [];
   selectedEventId: number | null = null;
   prediction: AttendancePredictionResult | null = null;
@@ -47,7 +49,7 @@ export class ResourcePlanning implements OnInit {
   totalStaff = 0;
   bufferPercent = 8;
 
-  constructor(private eventSvc: EventService, private predSvc: PredictionService) {}
+  constructor(private eventSvc: EventService, private predSvc: PredictionService,private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.eventSvc.getAll().subscribe({
@@ -64,7 +66,16 @@ export class ResourcePlanning implements OnInit {
     return this.categories.find(c => c.id === this.activeCategory);
   }
 
-  onSelect(): void { this.prediction = null; this.categories = []; this.error = ''; this.calculated = false; }
+  onSelect(): void {
+  this.prediction = null;
+  this.categories = [];
+  this.error = '';
+  this.calculated = false;
+
+  // 🔥 reset values
+  this.attendanceValue = 0;
+  this.capacityFillValue = 0;
+}
 
   setMode(manual: boolean): void {
     this.manualOverride = manual;
@@ -72,20 +83,56 @@ export class ResourcePlanning implements OnInit {
     this.calculated = false;
     this.error = '';
   }
+updateValues(attendance: number): void {
+  const safeAttendance = Number(attendance) || 0;
 
-  calculate(): void {
-    if (!this.selectedEventId) return;
-    if (this.manualOverride) {
-      this.buildCategories(this.manualAttendance);
-      return;
+  this.attendanceValue = safeAttendance;
+
+  const capacity = Number(this.selectedEvent?.locationCapacity) || 1;
+
+  this.capacityFillValue = Math.min(
+    100,
+    Math.round((safeAttendance / capacity) * 100)
+  );
+}
+calculate(): void {
+  if (!this.selectedEventId) return;
+
+  this.loading = true;
+  this.error = '';
+
+  this.predSvc.predictAttendance(Number(this.selectedEventId)).subscribe({
+    next: r => {
+      console.log('RESOURCE PREDICTION:', r);
+
+      const predicted =
+        Number(r?.predictedAttendance) ||
+        Number((r as any)?.predicted_attendance) ||
+        0;
+
+      this.prediction = {
+        ...r,
+        predictedAttendance: predicted
+      };
+
+      this.updateValues(predicted);
+      this.buildCategories(predicted);
+
+      this.loading = false;
+
+      // 🔥🔥 CRITICAL LINE
+      this.cdr.detectChanges();
+    },
+
+    error: err => {
+      console.error(err);
+      this.error = 'Prediction failed';
+      this.loading = false;
+
+      this.cdr.detectChanges(); // also here
     }
-    this.loading = true; this.error = '';
-    this.predSvc.predictAttendance(Number(this.selectedEventId)).subscribe({
-      next: r => { this.prediction = r; this.buildCategories(r.predictedAttendance); this.loading = false; },
-      error: err => { this.error = err.error?.message || 'AI service unavailable. Switch to Manual mode.'; this.loading = false; }
-    });
-  }
-
+  });
+}
   buildCategories(a: number): void {
     const buf = 1 + this.bufferPercent / 100;
     const chairs    = Math.ceil(a * buf);
@@ -161,13 +208,12 @@ export class ResourcePlanning implements OnInit {
   }
 
   get attendanceCount(): number {
-    return this.manualOverride ? this.manualAttendance : (this.prediction?.predictedAttendance ?? 0);
-  }
+  return this.manualOverride ? this.manualAttendance : this.attendanceValue;
+}
 
   get capacityFill(): number {
-    if (!this.selectedEvent?.locationCapacity || !this.attendanceCount) return 0;
-    return Math.min(100, Math.round((this.attendanceCount / this.selectedEvent.locationCapacity) * 100));
-  }
+  return this.capacityFillValue;
+}
 
   get capacityColor(): string {
     if (this.capacityFill >= 90) return '#f43f5e';
