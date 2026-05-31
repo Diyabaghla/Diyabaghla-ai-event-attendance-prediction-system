@@ -1,5 +1,7 @@
-<div class="shell" [class.sidebar-collapsed]="!sidebarOpen">
-
+<div class="shell" [class.sidebar-collapsed]="!sidebarOpen" [class.sidebar-open]="mobileOpen">
+@if (mobileOpen) {
+  <div class="mobile-backdrop" (click)="mobileOpen = false"></div>
+}
   <!-- ── SIDEBAR ─────────────────────────────────────── -->
   <aside class="sidebar">
     <div class="sidebar-header">
