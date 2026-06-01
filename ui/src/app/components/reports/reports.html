@@ -1,0 +1,433 @@
+<div class="reports-root animate-in">
+
+  <!-- ── HERO ──────────────────────────────────────────────── -->
+  <div class="reports-hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow"><span class="eyebrow-dot"></span> Admin Analytics</div>
+      <h1 class="hero-title">Reports & Analytics</h1>
+      <p class="hero-sub">Live insights into event performance, attendance trends and registration activity.</p>
+    </div>
+    <div class="hero-right">
+      <div class="ai-badge"><span class="ai-dot"></span> Live Analytics</div>
+      <div class="download-menu">
+        <button class="dl-main-btn" (click)="dlOpen = !dlOpen">⬇ Download Report</button>
+        <div class="dl-dropdown" *ngIf="dlOpen">
+          <button class="dl-item" (click)="downloadEventPerformance(); dlOpen=false">📊 Event Performance (.csv)</button>
+          <button class="dl-item" (click)="downloadRegistrations(); dlOpen=false">🎫 Registrations (.csv)</button>
+          <button class="dl-item" (click)="downloadDepartment(); dlOpen=false">🏢 Department Report (.csv)</button>
+          <div class="dl-div"></div>
+          <button class="dl-item dl-json" (click)="downloadFullReportJSON(); dlOpen=false">📦 Full Report (.json)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ERROR ──────────────────────────────────────────────── -->
+  <div class="dash-alert" *ngIf="error">⚠ {{ error }}</div>
+
+  <!-- ── LOADER ─────────────────────────────────────────────── -->
+  <div class="reports-loading" *ngIf="loading">
+    <div class="rl-rings">
+      <div class="rl-ring r1"></div>
+      <div class="rl-ring r2"></div>
+      <div class="rl-ring r3"></div>
+    </div>
+    <p>Loading analytics data…</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- ── KPI STRIP ──────────────────────────────────────────── -->
+    <div class="kpi-strip">
+      <div class="kpi-card kpi-teal">
+        <div class="kpi-icon">🎫</div>
+        <div class="kpi-body">
+          <div class="kpi-val">{{ displayTotal }}</div>
+          <div class="kpi-lbl">Total Registrations</div>
+        </div>
+        <div class="kpi-trend">All time</div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-body">
+          <div class="kpi-val" style="color:var(--green-500)">{{ displayActive }}</div>
+          <div class="kpi-lbl">Active</div>
+        </div>
+        <div class="kpi-trend">Registered</div>
+      </div>
+      <div class="kpi-card kpi-rose">
+        <div class="kpi-icon">❌</div>
+        <div class="kpi-body">
+          <div class="kpi-val" style="color:var(--rose-500)">{{ displayCancel }}</div>
+          <div class="kpi-lbl">Cancelled</div>
+        </div>
+        <div class="kpi-trend">Withdrawn</div>
+      </div>
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-icon">📈</div>
+        <div class="kpi-body">
+          <div class="kpi-val" style="color:var(--amber-400)">{{ displayFill }}</div>
+          <div class="kpi-lbl">Avg Fill Rate</div>
+        </div>
+        <div class="kpi-trend">Across events</div>
+      </div>
+    </div>
+
+    <!-- ── TOP EVENT BANNER ───────────────────────────────────── -->
+    <div class="top-event-banner" *ngIf="topEvent">
+      <div class="teb-trophy">🏆</div>
+      <div class="teb-body">
+        <div class="teb-label">TOP PERFORMING EVENT</div>
+        <div class="teb-title">{{ topEvent.eventTitle }}</div>
+        <div class="teb-meta">{{ topEvent.department }} · {{ topEvent.mode }}</div>
+      </div>
+      <div class="teb-stats">
+        <div class="teb-stat">
+          <div class="teb-val teal">{{ topEvent.fillRate }}%</div>
+          <div class="teb-lbl">Fill Rate</div>
+        </div>
+        <div class="teb-stat">
+          <div class="teb-val amber">{{ topEvent.activeRegistrations }}</div>
+          <div class="teb-lbl">Attendees</div>
+        </div>
+        <div class="teb-stat">
+          <div class="teb-val gold">{{ getRatingStars(topEvent.speakerRating) }}</div>
+          <div class="teb-lbl">{{ topEvent.speakerRating }}/5</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TABS ───────────────────────────────────────────────── -->
+    <div class="tab-bar">
+      <button class="tab-btn" [class.active]="activeTab==='overview'"    (click)="switchTab('overview')">📊 Overview</button>
+      <button class="tab-btn" [class.active]="activeTab==='performance'" (click)="switchTab('performance')">🏅 Performance</button>
+      <button class="tab-btn" [class.active]="activeTab==='departments'" (click)="switchTab('departments')">🏢 Departments</button>
+      <button class="tab-btn" [class.active]="activeTab==='trends'"      (click)="switchTab('trends')">📅 Trends</button>
+    </div>
+
+    <!-- ══ TAB: OVERVIEW ════════════════════════════════════════ -->
+    <ng-container *ngIf="activeTab === 'overview'">
+
+      <!-- Bar chart — full width -->
+      <div class="chart-card mb-14">
+        <div class="chart-header">
+          <div class="ch-left">
+            <span class="ch-icon">📊</span>
+            <div>
+              <div class="ch-title">Registrations vs AI Predicted</div>
+              <div class="ch-sub">Per event — actual registered vs model forecast</div>
+            </div>
+          </div>
+          <button class="dl-icon-btn" (click)="downloadRegistrations()">⬇ CSV</button>
+        </div>
+        <div class="chart-container tall">
+          <canvas #barCanvas class="chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Two charts side by side — stack on mobile -->
+      <div class="two-col mb-14">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="ch-left">
+              <span class="ch-icon">🍩</span>
+              <div>
+                <div class="ch-title">Registration Status</div>
+                <div class="ch-sub">Registered vs Cancelled</div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas #donutCanvas class="chart-canvas"></canvas>
+          </div>
+          <div class="status-summary" *ngIf="statusReport">
+            <div class="ss-row"><span class="ss-dot green"></span><span class="ss-label">Registered</span><span class="ss-val">{{ statusReport.registered }}</span></div>
+            <div class="ss-row"><span class="ss-dot rose"></span><span class="ss-label">Cancelled</span><span class="ss-val">{{ statusReport.cancelled }}</span></div>
+            <div class="ss-row"><span class="ss-dot amber"></span><span class="ss-label">Cancel Rate</span><span class="ss-val">{{ statusReport.cancellationRate }}%</span></div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="ch-left">
+              <span class="ch-icon">📉</span>
+              <div>
+                <div class="ch-title">Venue Fill Rate</div>
+                <div class="ch-sub">% capacity filled per event</div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas #lineCanvas class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- ══ TAB: PERFORMANCE ═════════════════════════════════════ -->
+    <ng-container *ngIf="activeTab === 'performance'">
+
+      <div class="download-row">
+        <button class="dl-row-btn" (click)="downloadEventPerformance()">⬇ Performance CSV</button>
+        <button class="dl-row-btn json" (click)="downloadFullReportJSON()">⬇ Full Report JSON</button>
+      </div>
+
+      <div class="table-card mb-14">
+        <div class="tc-header">
+          <h3 class="tc-title">Event Performance Table</h3>
+          <span class="tc-count">{{ performanceData.length }} events</span>
+        </div>
+        <div class="table-wrap">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Dept</th>
+                <th>Mode</th>
+                <th>Regs</th>
+                <th>Capacity</th>
+                <th>Fill</th>
+                <th>Speaker</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of performanceData">
+                <td class="td-event">{{ e.eventTitle }}</td>
+                <td><span class="dept-chip">{{ e.department }}</span></td>
+                <td>
+                  <span class="mode-chip"
+                    [class.online]="e.mode==='Online'"
+                    [class.offline]="e.mode==='Offline'"
+                    [class.hybrid]="e.mode==='Hybrid'">{{ e.mode }}</span>
+                </td>
+                <td class="td-num">{{ e.activeRegistrations }}</td>
+                <td class="td-num">{{ e.locationCapacity }}</td>
+                <td>
+                  <div class="fill-cell">
+                    <div class="fill-track">
+                      <div class="fill-bar" [style.width.%]="getCapPct(e)" [style.background]="getCapColor(e)"></div>
+                    </div>
+                    <span class="fill-pct" [style.color]="getCapColor(e)">{{ e.fillRate }}%</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="star-rating">{{ getRatingStars(e.speakerRating) }}</span>
+                  <span class="rating-num">{{ e.speakerRating }}</span>
+                </td>
+                <td class="td-price">
+                  <span [class.free-badge]="e.ticketPrice===0">{{ e.ticketPrice === 0 ? 'Free' : '$'+e.ticketPrice }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card mb-14" *ngIf="attendanceData.length">
+        <div class="tc-header">
+          <h3 class="tc-title">Attendance vs AI Prediction</h3>
+          <button class="dl-icon-btn" (click)="downloadRegistrations()">⬇ CSV</button>
+        </div>
+        <div class="table-wrap">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th>Registered</th>
+                <th>Cancelled</th>
+                <th>AI Predicted</th>
+                <th>Accuracy</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let a of attendanceData">
+                <td class="td-event">{{ a.eventTitle }}</td>
+                <td><span class="dept-chip">{{ a.eventType }}</span></td>
+                <td class="td-date">{{ formatDate(a.eventDate) }}</td>
+                <td class="td-num green">{{ a.activeRegistrations }}</td>
+                <td class="td-num rose">{{ a.cancelledRegistrations }}</td>
+                <td class="td-num amber">{{ a.predictedAttendance }}</td>
+                <td>
+                  <span class="acc-chip"
+                    [class.acc-good]="a.predictedAttendance <= a.activeRegistrations"
+                    [class.acc-warn]="a.predictedAttendance > a.activeRegistrations">
+                    {{ a.predictedAttendance <= a.activeRegistrations ? '✓ On target' : '⚠ Over' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- ══ TAB: DEPARTMENTS ═════════════════════════════════════ -->
+    <ng-container *ngIf="activeTab === 'departments'">
+
+      <div class="download-row">
+        <button class="dl-row-btn" (click)="downloadDepartment()">⬇ Download Department CSV</button>
+      </div>
+
+      <!-- Dept bar chart — full width -->
+      <div class="chart-card mb-14">
+        <div class="chart-header">
+          <div class="ch-left">
+            <span class="ch-icon">🏢</span>
+            <div>
+              <div class="ch-title">Registrations by Department</div>
+              <div class="ch-sub">Total active registrations per department</div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-container tall">
+          <canvas #deptCanvas class="chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Mode + EventType — side by side, stack on mobile -->
+      <div class="two-col mb-14">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="ch-left">
+              <span class="ch-icon">🔘</span>
+              <div>
+                <div class="ch-title">Event Mode Split</div>
+                <div class="ch-sub">Online vs Offline vs Hybrid</div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas #modeCanvas class="chart-canvas"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="ch-left">
+              <span class="ch-icon">🎭</span>
+              <div>
+                <div class="ch-title">Events by Type</div>
+                <div class="ch-sub">Count and avg rating</div>
+              </div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas #eventTypeCanvas class="chart-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dept detail table -->
+      <div class="table-card mb-14" *ngIf="deptReport?.byDepartment?.length">
+        <div class="tc-header">
+          <h3 class="tc-title">Department Detail</h3>
+        </div>
+        <div class="table-wrap">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Department</th>
+                <th>Events</th>
+                <th>Registrations</th>
+                <th>Avg Fill Rate</th>
+                <th>Avg Speaker Rating</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let d of deptReport!.byDepartment">
+                <td class="td-event">{{ d.department }}</td>
+                <td class="td-num">{{ d.totalEvents }}</td>
+                <td class="td-num teal">{{ d.totalRegistrations }}</td>
+                <td>
+                  <div class="fill-cell">
+                    <div class="fill-track">
+                      <div class="fill-bar" [style.width.%]="d.avgFillRate"
+                           [style.background]="d.avgFillRate>=70?'var(--rose-500)':d.avgFillRate>=40?'var(--amber-400)':'var(--green-500)'">
+                      </div>
+                    </div>
+                    <span class="fill-pct">{{ d.avgFillRate | number:'1.0-1' }}%</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="star-rating">{{ getRatingStars(d.avgSpeakerRating) }}</span>
+                  <span class="rating-num">{{ d.avgSpeakerRating | number:'1.1-1' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </ng-container>
+
+    <!-- ══ TAB: TRENDS ══════════════════════════════════════════ -->
+    <ng-container *ngIf="activeTab === 'trends'">
+
+      <!-- Weekly trend chart — full width -->
+      <div class="chart-card mb-14">
+        <div class="chart-header">
+          <div class="ch-left">
+            <span class="ch-icon">📅</span>
+            <div>
+              <div class="ch-title">Weekly Registration Trend</div>
+              <div class="ch-sub">Registrations vs cancellations per week</div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-container tall" *ngIf="weeklyTrend.length > 0">
+          <canvas #trendCanvas class="chart-canvas"></canvas>
+        </div>
+        <div class="empty-chart" *ngIf="weeklyTrend.length === 0">
+          <p>No registration activity yet. Register for events to see weekly trends.</p>
+        </div>
+      </div>
+
+      <!-- Weekly breakdown table -->
+      <div class="table-card mb-14" *ngIf="weeklyTrend.length">
+        <div class="tc-header">
+          <h3 class="tc-title">Weekly Breakdown</h3>
+        </div>
+        <div class="table-wrap">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Week Starting</th>
+                <th>Registrations</th>
+                <th>Cancellations</th>
+                <th>Net</th>
+                <th>Cancel Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let w of weeklyTrend">
+                <td>{{ formatDate(w.weekStart) }}</td>
+                <td class="td-num green">{{ w.registrations }}</td>
+                <td class="td-num rose">{{ w.cancellations }}</td>
+                <td class="td-num"
+                    [class.green]="w.registrations - w.cancellations >= 0"
+                    [class.rose]="w.registrations - w.cancellations < 0">
+                  {{ w.registrations - w.cancellations >= 0 ? '+' : '' }}{{ w.registrations - w.cancellations }}
+                </td>
+                <td>
+                  <span class="rate-chip"
+                    [class.rate-ok]="(w.cancellations / ((w.registrations + w.cancellations) || 1) * 100) < 20"
+                    [class.rate-warn]="(w.cancellations / ((w.registrations + w.cancellations) || 1) * 100) >= 20">
+                    {{ (w.cancellations / ((w.registrations + w.cancellations) || 1) * 100) | number:'1.0-1' }}%
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </ng-container>
+
+  </ng-container>
+
+</div>

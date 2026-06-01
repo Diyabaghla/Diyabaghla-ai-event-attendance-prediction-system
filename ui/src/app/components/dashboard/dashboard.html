@@ -1,0 +1,350 @@
+<div class="page-container animate-in">
+
+  <!-- ── HERO HEADER ─────────────────────────────── -->
+  <div class="dash-hero">
+    <div class="dash-hero-left">
+      <div class="greeting-badge">
+        <span class="greeting-dot"></span>
+        {{ currentDate }}
+      </div>
+      <h1 class="dash-greeting">
+        {{ getGreeting() }}, <span class="name-accent">{{ getFirstName() }}</span>
+        <span class="greeting-emoji">{{ getGreetingEmoji() }}</span>
+      </h1>
+      <p class="dash-subtitle">Here's your event intelligence overview for today.</p>
+    </div>
+    <div class="dash-hero-right">
+      <div class="live-clock">
+        <div class="clock-time">{{ currentTime }}</div>
+        <div class="clock-label">Live</div>
+      </div>
+      @if (auth.isAdmin) {
+        <a routerLink="/app/events" class="btn btn-primary btn-lg">+ New Event</a>
+      }
+    </div>
+  </div>
+
+  <!-- ── ERROR ───────────────────────────────────── -->
+  @if (error) {
+    <div class="alert alert-error" style="margin-bottom:20px">
+      ⚠ {{ error }}
+      <button class="btn btn-secondary btn-sm" (click)="loadData()" style="margin-left:12px">Retry</button>
+    </div>
+  }
+
+  <!-- ── LOADER ──────────────────────────────────── -->
+  @if (loading) {
+    <div class="dash-loader">
+      <div class="loader-pulse">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring pulse-ring-2"></div>
+        <div class="pulse-core">⬡</div>
+      </div>
+      <p>Loading your dashboard…</p>
+    </div>
+  }
+
+  @if (!loading) {
+
+    <!-- ── STAT CARDS ──────────────────────────────── -->
+    <div class="stats-grid">
+
+      <!-- Total Events -->
+      <div class="stat-card-v2">
+        <div class="sc-header">
+          <div class="sc-icon-wrap teal"><span>📅</span></div>
+          @if (upcomingEvents > 0) {
+            <div class="sc-trend up">↑ {{ upcomingEvents }} upcoming</div>
+          }
+        </div>
+        <div class="sc-value">{{ displayTotalEvents }}</div>
+        <div class="sc-label">Total Events</div>
+        @if (sparklinePoints) {
+          <div class="sc-sparkline">
+            <svg viewBox="0 0 120 40" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="sg1" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#00a8a8" stop-opacity="0.4"/>
+                  <stop offset="100%" stop-color="#00a8a8" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <polygon [attr.points]="sparklinePoints + ' 120,40 0,40'" fill="url(#sg1)"/>
+              <polyline [attr.points]="sparklinePoints" fill="none" stroke="#00c5c5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        }
+        @if (!sparklinePoints) {
+          <div class="sc-bar-empty"></div>
+        }
+      </div>
+
+      <!-- Upcoming Events -->
+      <div class="stat-card-v2 amber">
+        <div class="sc-header">
+          <div class="sc-icon-wrap amber"><span>🗓</span></div>
+          <div class="sc-ring">
+            <svg viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="40" fill="none" stroke="rgba(245,158,11,0.15)" stroke-width="8"/>
+              <circle cx="45" cy="45" r="40" fill="none" stroke="#f59e0b" stroke-width="8"
+                stroke-dasharray="251"
+                [attr.stroke-dashoffset]="251 - attendanceRingDash"
+                stroke-linecap="round"
+                transform="rotate(-90 45 45)"
+                style="transition:stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)"/>
+            </svg>
+            <span class="ring-label">{{ events.length ? ((upcomingEvents/events.length)*100 | number:'1.0-0') : 0 }}%</span>
+          </div>
+        </div>
+        <div class="sc-value amber-val">{{ displayUpcoming }}</div>
+        <div class="sc-label">Upcoming Events</div>
+        <div class="sc-sub">Scheduled ahead</div>
+      </div>
+
+      <!-- Active Registrations -->
+      <div class="stat-card-v2 green">
+        <div class="sc-header">
+          <div class="sc-icon-wrap green"><span>🎫</span></div>
+          <div class="sc-ring">
+            <svg viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="40" fill="none" stroke="rgba(16,185,129,0.15)" stroke-width="8"/>
+              <circle cx="45" cy="45" r="40" fill="none" stroke="#10b981" stroke-width="8"
+                stroke-dasharray="251"
+                [attr.stroke-dashoffset]="251 - registrationRingDash"
+                stroke-linecap="round"
+                transform="rotate(-90 45 45)"
+                style="transition:stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)"/>
+            </svg>
+            <span class="ring-label green-lbl">
+              {{ myRegistrations.length ? ((activeRegistrations/myRegistrations.length)*100 | number:'1.0-0') : 0 }}%
+            </span>
+          </div>
+        </div>
+        <div class="sc-value green-val">{{ displayActive }}</div>
+        <div class="sc-label">My Registrations</div>
+        <div class="sc-sub">Active &amp; confirmed</div>
+      </div>
+
+      <!-- Cancelled -->
+      <div class="stat-card-v2 rose">
+        <div class="sc-header">
+          <div class="sc-icon-wrap rose"><span>❌</span></div>
+        </div>
+        <div class="sc-value rose-val">{{ displayCancelled }}</div>
+        <div class="sc-label">Cancelled</div>
+        <div class="sc-sub">Withdrawn by you</div>
+        <div class="sc-cancelled-bar">
+          <div class="cb-fill" [style.width.%]="myRegistrations.length ? (cancelledRegistrations/myRegistrations.length)*100 : 0"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── ADMIN SYSTEM BANNER ─────────────────────── -->
+    @if (auth.isAdmin && statusReport) {
+      <div class="system-banner">
+        <div class="sb-glow"></div>
+        <div class="sb-label">
+          <span class="sb-dot"></span>
+          System Overview
+        </div>
+        <div class="sb-stats">
+          <div class="sb-stat">
+            <div class="sb-val">{{ statusReport.totalRegistrations }}</div>
+            <div class="sb-lbl">Total Registrations</div>
+          </div>
+          <div class="sb-divider"></div>
+          <div class="sb-stat">
+            <div class="sb-val" style="color:var(--green-500)">{{ statusReport.registered }}</div>
+            <div class="sb-lbl">Active</div>
+          </div>
+          <div class="sb-divider"></div>
+          <div class="sb-stat">
+            <div class="sb-val" style="color:var(--rose-500)">{{ statusReport.cancelled }}</div>
+            <div class="sb-lbl">Cancelled</div>
+          </div>
+          <div class="sb-divider"></div>
+          <div class="sb-stat">
+            <div class="sb-val" style="color:var(--amber-400)">{{ statusReport.cancellationRate }}%</div>
+            <div class="sb-lbl">Cancellation Rate</div>
+          </div>
+        </div>
+        <a routerLink="/app/reports" class="btn btn-secondary btn-sm">View Full Report →</a>
+      </div>
+    }
+
+    <!-- ── MAIN GRID ───────────────────────────────── -->
+    <div class="main-grid">
+
+      <!-- Recent Events Card -->
+      <div class="dash-card events-card">
+        <div class="dc-header">
+          <div class="dc-title-group">
+            <div class="dc-icon">📅</div>
+            <h3 class="dc-title">Recent Events</h3>
+          </div>
+          <a routerLink="/app/events" class="dc-link">View all →</a>
+        </div>
+
+        @if (recentEvents.length === 0) {
+          <div class="empty-state">
+            <div class="es-illustration">
+              <svg viewBox="0 0 120 80" width="120">
+                <rect x="10" y="20" width="100" height="55" rx="8" fill="rgba(0,168,168,0.08)" stroke="rgba(0,168,168,0.2)" stroke-width="1"/>
+                <rect x="10" y="20" width="100" height="18" rx="8" fill="rgba(0,168,168,0.12)"/>
+                <rect x="25" y="48" width="70" height="4" rx="2" fill="rgba(0,168,168,0.15)"/>
+                <rect x="35" y="58" width="50" height="4" rx="2" fill="rgba(0,168,168,0.10)"/>
+                <circle cx="60" cy="12" r="5" fill="rgba(0,168,168,0.3)"/>
+                <circle cx="45" cy="12" r="5" fill="rgba(0,168,168,0.2)"/>
+                <circle cx="75" cy="12" r="5" fill="rgba(0,168,168,0.2)"/>
+              </svg>
+            </div>
+            <p>No events yet.</p>
+            @if (auth.isAdmin) {
+              <a routerLink="/app/events" class="btn btn-secondary btn-sm">Create one →</a>
+            }
+          </div>
+        }
+
+        @if (recentEvents.length > 0) {
+          <div class="event-feed">
+            @for (ev of recentEvents; track ev.id) {
+              <div class="ef-item">
+                <div class="ef-icon-wrap" [ngClass]="'mode-' + ev.mode.toLowerCase()">
+                  <span>{{ getModeIcon(ev.mode) }}</span>
+                </div>
+                <div class="ef-info">
+                  <div class="ef-title">{{ ev.title }}</div>
+                  <div class="ef-meta">
+                    {{ formatDate(ev.eventDate) }}
+                    <span class="ef-dot">·</span>
+                    {{ ev.department }}
+                  </div>
+                </div>
+                <div class="ef-right">
+                  <span class="badge" [ngClass]="getModeClass(ev.mode)">{{ ev.mode }}</span>
+                  <div class="ef-days" [ngClass]="getDaysUntilClass(ev.eventDate)">
+                    {{ getDaysUntil(ev.eventDate) }}
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- My Registrations Card -->
+      <div class="dash-card regs-card">
+        <div class="dc-header">
+          <div class="dc-title-group">
+            <div class="dc-icon">🎫</div>
+            <h3 class="dc-title">My Registrations</h3>
+          </div>
+          <a routerLink="/app/registrations" class="dc-link">View all →</a>
+        </div>
+
+        @if (myRegistrations.length === 0) {
+          <div class="empty-state">
+            <div class="es-illustration">
+              <svg viewBox="0 0 120 80" width="120">
+                <rect x="15" y="15" width="90" height="22" rx="6" fill="rgba(0,168,168,0.08)" stroke="rgba(0,168,168,0.2)" stroke-width="1"/>
+                <rect x="15" y="44" width="90" height="22" rx="6" fill="rgba(0,168,168,0.05)" stroke="rgba(0,168,168,0.12)" stroke-width="1"/>
+                <rect x="25" y="22" width="40" height="4" rx="2" fill="rgba(0,168,168,0.2)"/>
+                <rect x="25" y="30" width="25" height="3" rx="1.5" fill="rgba(0,168,168,0.12)"/>
+                <rect x="25" y="51" width="40" height="4" rx="2" fill="rgba(0,168,168,0.15)"/>
+              </svg>
+            </div>
+            <p>No registrations yet.</p>
+            <a routerLink="/app/events" class="btn btn-secondary btn-sm">Browse events →</a>
+          </div>
+        }
+
+        @if (myRegistrations.length > 0) {
+          <div class="reg-feed">
+            @for (r of myRegistrations.slice(0,5); track r.id) {
+              <div class="rf-item">
+                <div class="rf-status-bar" [style.background]="getStatusColor(r.status)"></div>
+                <div class="rf-info">
+                  <div class="rf-title">{{ r.eventTitle }}</div>
+                  <div class="rf-meta">{{ formatDateShort(r.registrationDate || '') }}</div>
+                </div>
+                <span class="badge" [ngClass]="r.status === 'Registered' ? 'badge-success' : 'badge-danger'">
+                  {{ r.status }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <!-- ── QUICK ACTIONS ───────────────────────────── -->
+    <div class="quick-section">
+      <h3 class="qs-title">Quick Actions</h3>
+      <div class="qs-grid">
+
+        <a routerLink="/app/predictions/attendance" class="qs-card teal-card">
+          <div class="qs-bg-shape"></div>
+          <div class="qs-icon-ring">
+            <svg viewBox="0 0 60 60" width="60">
+              <circle cx="30" cy="30" r="28" fill="none" stroke="rgba(0,168,168,0.2)" stroke-width="2"/>
+              <circle cx="30" cy="30" r="28" fill="none" stroke="#00a8a8" stroke-width="2"
+                stroke-dasharray="176" stroke-dashoffset="44" stroke-linecap="round"
+                transform="rotate(-90 30 30)"/>
+            </svg>
+            <span class="qs-emoji">📈</span>
+          </div>
+          <div class="qs-label">Predict Attendance</div>
+          <div class="qs-sub">AI forecast</div>
+        </a>
+
+        <a routerLink="/app/predictions/no-show" class="qs-card rose-card">
+          <div class="qs-bg-shape"></div>
+          <div class="qs-icon-ring">
+            <svg viewBox="0 0 60 60" width="60">
+              <circle cx="30" cy="30" r="28" fill="none" stroke="rgba(244,63,94,0.2)" stroke-width="2"/>
+              <circle cx="30" cy="30" r="28" fill="none" stroke="#f43f5e" stroke-width="2"
+                stroke-dasharray="176" stroke-dashoffset="88" stroke-linecap="round"
+                transform="rotate(-90 30 30)"/>
+            </svg>
+            <span class="qs-emoji">🚫</span>
+          </div>
+          <div class="qs-label">No-Show Prediction</div>
+          <div class="qs-sub">Behavioral model</div>
+        </a>
+
+        <a routerLink="/app/resource-planning" class="qs-card amber-card">
+          <div class="qs-bg-shape"></div>
+          <div class="qs-icon-ring">
+            <svg viewBox="0 0 60 60" width="60">
+              <circle cx="30" cy="30" r="28" fill="none" stroke="rgba(245,158,11,0.2)" stroke-width="2"/>
+              <circle cx="30" cy="30" r="28" fill="none" stroke="#f59e0b" stroke-width="2"
+                stroke-dasharray="176" stroke-dashoffset="66" stroke-linecap="round"
+                transform="rotate(-90 30 30)"/>
+            </svg>
+            <span class="qs-emoji">📦</span>
+          </div>
+          <div class="qs-label">Plan Resources</div>
+          <div class="qs-sub">Chairs, food, staff</div>
+        </a>
+
+        <a routerLink="/app/reports" class="qs-card purple-card">
+          <div class="qs-bg-shape"></div>
+          <div class="qs-icon-ring">
+            <svg viewBox="0 0 60 60" width="60">
+              <circle cx="30" cy="30" r="28" fill="none" stroke="rgba(139,92,246,0.2)" stroke-width="2"/>
+              <circle cx="30" cy="30" r="28" fill="none" stroke="#8b5cf6" stroke-width="2"
+                stroke-dasharray="176" stroke-dashoffset="22" stroke-linecap="round"
+                transform="rotate(-90 30 30)"/>
+            </svg>
+            <span class="qs-emoji">📊</span>
+          </div>
+          <div class="qs-label">View Reports</div>
+          <div class="qs-sub">Analytics &amp; charts</div>
+        </a>
+
+      </div>
+    </div>
+
+  }
+</div>
