@@ -145,55 +145,68 @@ public class ReportService : IReportService
         };
     }
 
-    // ── 5. Department Breakdown ───────────────────────────────
-    public async Task<DepartmentBreakdownReport> GetDepartmentBreakdownAsync()
-    {
-        var events = await _db.Events
-            .Include(e => e.Registrations)
-            .ToListAsync();
+    // // ── 5. Department Breakdown ───────────────────────────────
+public async Task<DepartmentBreakdownReport> GetDepartmentBreakdownAsync()
+{
+    var events = await _db.Events
+        .Include(e => e.Registrations)
+        .ToListAsync();
 
-        var byDept = events
-            .GroupBy(e => e.Department)
-            .Select(g =>
-            {
-                int totalReg  = g.Sum(e => e.Registrations.Count);
-                int activeReg = g.Sum(e => e.Registrations.Count(r => r.Status == "Registered"));
-                double avgRat = g.Average(e => e.SpeakerRating);
-                return new DepartmentItem
-                {
-                    Department          = g.Key,
-                    TotalEvents         = g.Count(),
-                    TotalRegistrations  = totalReg,
-                    ActiveRegistrations = activeReg,
-                    AvgSpeakerRating    = Math.Round(avgRat, 2)
-                };
-            })
-            .OrderByDescending(d => d.TotalRegistrations)
-            .ToList();
-
-        var byMode = events
-            .GroupBy(e => e.Mode)
-            .Select(g =>
-            {
-                int count = g.Count();
-                return new ModeItem
-                {
-                    Mode       = g.Key,
-                    EventCount = count,
-                    Percentage = events.Count > 0
-                        ? (int)Math.Round((double)count / events.Count * 100) : 0
-                };
-            })
-            .OrderByDescending(m => m.EventCount)
-            .ToList();
-
-        return new DepartmentBreakdownReport
+    var byDept = events
+        .GroupBy(e => e.Department)
+        .Select(g =>
         {
-            ByDepartment = byDept,
-            ByMode       = byMode
-        };
-    }
+            int totalReg  = g.Sum(e => e.Registrations.Count);
+            int activeReg = g.Sum(e => e.Registrations.Count(r => r.Status == "Registered"));
+            double avgRat = g.Average(e => e.SpeakerRating);
+            return new DepartmentItem
+            {
+                Department          = g.Key,
+                TotalEvents         = g.Count(),
+                TotalRegistrations  = totalReg,
+                ActiveRegistrations = activeReg,
+                AvgSpeakerRating    = Math.Round(avgRat, 2)
+            };
+        })
+        .OrderByDescending(d => d.TotalRegistrations)
+        .ToList();
 
+    var byMode = events
+        .GroupBy(e => e.Mode)
+        .Select(g =>
+        {
+            int count = g.Count();
+            return new ModeItem
+            {
+                Mode       = g.Key,
+                EventCount = count,
+                Percentage = events.Count > 0
+                    ? (int)Math.Round((double)count / events.Count * 100) : 0
+            };
+        })
+        .OrderByDescending(m => m.EventCount)
+        .ToList();
+
+    // ── ADD THIS ──────────────────────────────────────────────
+    var byEventType = events
+        .GroupBy(e => e.EventType)
+        .Select(g => new EventTypeItem
+        {
+            EventType  = g.Key,
+            EventCount = g.Count(),
+            AvgRating  = Math.Round(g.Average(e => e.SpeakerRating), 1)
+        })
+        .OrderByDescending(x => x.EventCount)
+        .ToList();
+    // ─────────────────────────────────────────────────────────
+
+    return new DepartmentBreakdownReport
+    {
+        ByDepartment = byDept,
+        ByMode       = byMode,
+        ByEventType  = byEventType   // ← ADD THIS
+    };
+}
     // ── 6. Weekly Trend ───────────────────────────────────────
     public async Task<List<WeeklyTrendItem>> GetWeeklyTrendAsync()
     {

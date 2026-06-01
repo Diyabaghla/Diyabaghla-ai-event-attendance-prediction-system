@@ -229,6 +229,7 @@ public class DepartmentBreakdownReport
 {
     public List<DepartmentItem> ByDepartment { get; set; } = new();
     public List<ModeItem>       ByMode       { get; set; } = new();
+    public List<EventTypeItem>  ByEventType  { get; set; } = new(); 
 }
 
 public class WeeklyTrendItem

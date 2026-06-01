@@ -56,6 +56,7 @@ export interface Registration {
   status: 'Registered' | 'Cancelled';
   daysBeforeRegistration?: number;
   pastUserAttendanceRate: number;
+  eventDate?: string;
 }
 
 export interface RegisterRequest {
@@ -66,6 +67,7 @@ export interface RegisterRequest {
 // ─── Predictions ─────────────────────────────────
 export interface AttendancePredictionResult {
   predictedAttendance: number;
+  activeRegistrations: number;
 }
 export interface NoShowPredictionResult {
   prediction: string;
@@ -73,6 +75,7 @@ export interface NoShowPredictionResult {
 }
 export interface UserAttendancePredictionResult {
   probability: number;
+  prediction: 'Attend' | 'NoShow';
 }
 
 // ─── Reports ─────────────────────────────────────
@@ -131,24 +134,7 @@ export interface DepartmentReport {
   byEventType:  EventTypeItem[];
 }
 
-// export interface WeeklyTrendItem {
-//   weekStart:     string;
-//   registrations: number;
-//   cancellations: number;
-// }
 
-// export interface TopStatsReport {
-//   topEventByFillRate:         string;
-//   topEventFillRate:           number;
-//   topEventByRegistrations:    string;
-//   topEventRegistrationCount:  number;
-//   topRatedEvent:              string;
-//   topRatedScore:              number;
-//   totalEvents:                number;
-//   totalRegistrations:         number;
-//   avgFillRate:                number;
-//   avgSpeakerRating:           number;
-// }
 
 export interface TopStatsReport {
   topRatedEvent: any;
@@ -184,6 +170,7 @@ export interface ModeItem {
 export interface DepartmentBreakdownReport {
   byDepartment: DepartmentItem[];
   byMode:       ModeItem[];
+  byEventType:  EventTypeItem[];
 }
 
 export interface WeeklyTrendItem {
