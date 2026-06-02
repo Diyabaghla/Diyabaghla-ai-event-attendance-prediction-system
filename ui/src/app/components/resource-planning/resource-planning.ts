@@ -1,4 +1,3 @@
-
 import { Component, OnInit,ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -66,15 +65,15 @@ capacityFillValue = 0;
     return this.categories.find(c => c.id === this.activeCategory);
   }
 
-  onSelect(): void {
+onSelect(): void {
   this.prediction = null;
   this.categories = [];
   this.error = '';
   this.calculated = false;
 
-  // 🔥 reset values
-  this.attendanceValue = 0;
-  this.capacityFillValue = 0;
+  if (this.selectedEventId) {
+    this.calculate(); // 🔥 auto trigger
+  }
 }
 
   setMode(manual: boolean): void {
@@ -101,10 +100,20 @@ calculate(): void {
   this.loading = true;
   this.error = '';
 
+  // ✅ MANUAL MODE FIX
+  if (this.manualOverride) {
+    const attendance = this.manualAttendance || 0;
+
+    this.updateValues(attendance);
+    this.buildCategories(attendance);
+
+    this.loading = false;
+    return; // ❗ STOP API
+  }
+
+  // ✅ AI MODE
   this.predSvc.predictAttendance(Number(this.selectedEventId)).subscribe({
     next: r => {
-      console.log('RESOURCE PREDICTION:', r);
-
       const predicted =
         Number(r?.predictedAttendance) ||
         Number((r as any)?.predicted_attendance) ||
@@ -119,17 +128,14 @@ calculate(): void {
       this.buildCategories(predicted);
 
       this.loading = false;
-
-      // 🔥🔥 CRITICAL LINE
       this.cdr.detectChanges();
     },
 
     error: err => {
-      console.error(err);
-      this.error = 'Prediction failed';
+      // ✅ FIX ERROR MESSAGE
+      this.error = err?.error?.message || 'Prediction failed';
       this.loading = false;
-
-      this.cdr.detectChanges(); // also here
+      this.cdr.detectChanges();
     }
   });
 }
@@ -207,12 +213,21 @@ calculate(): void {
     }, duration / steps);
   }
 
-  get attendanceCount(): number {
-  return this.manualOverride ? this.manualAttendance : this.attendanceValue;
+get attendanceCount(): number {
+  if (this.manualOverride) return this.manualAttendance || 0;
+  return this.prediction?.predictedAttendance || 0;
 }
 
   get capacityFill(): number {
-  return this.capacityFillValue;
+  const event = this.selectedEvent;
+  const attendance = this.attendanceCount;
+
+  if (!event?.locationCapacity || !attendance) return 0;
+
+  return Math.min(
+    100,
+    Math.round((attendance / event.locationCapacity) * 100)
+  );
 }
 
   get capacityColor(): string {
