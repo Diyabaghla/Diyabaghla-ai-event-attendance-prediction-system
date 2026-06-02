@@ -436,7 +436,7 @@ Diya-ai-event-attendance-prediction/
      │    ├── IntegrationTests.csproj
      │    └── ReportsIntegrationTests.cs
      │ 
-     └── 📂 unit-tests/       #Service tests 
+     └── 📂 unit-tests/                  #Service tests 
           ├── AuthServiceTests.cs
 │         ├── EventServiceTests.cs
 │         ├── MSTestSettings.cs
@@ -455,7 +455,7 @@ Diya-ai-event-attendance-prediction/
 │       │   ├── auth.service.ts
 │       │   ├── api.services.ts
 │       │   ├── toast.service.ts
-│       │   └── notification.service.ts        ← NEW
+│       │   └── notification.service.ts       
 │       │
 │       ├── 📂 guards/
 │       │   └── auth.guard.ts
@@ -531,8 +531,12 @@ dotnet run                        # → http://localhost:5000
 # 2. Start FastAPI ML service
 cd tools
 cd fastapi
+venv\Scripts\activate             # Windows
+# source venv/bin/activate        # macOS / Linux
+
+# Install dependencies
 pip install -r requirements.txt
-uvicorn main:app --reload --port 8000  # → http://localhost:8000
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload  # → http://localhost:8000
 
 # 3. Start Angular frontend
 cd ui
