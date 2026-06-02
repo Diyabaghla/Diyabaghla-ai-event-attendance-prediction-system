@@ -21,9 +21,9 @@ def load_model(name):
     return joblib.load(path)
 
 try:
-    attendance_model      = load_model("attendance_prediction.pkl")
-    no_show_model         = load_model("no_show_prediction.pkl")
-    user_attendance_model = load_model("user_attendance.pkl")
+    attendance_model      = load_model("attendance_prediction_model.pkl")
+    no_show_model         = load_model("no_show_prediction_model.pkl")
+    user_attendance_model = load_model("user_attendance_model.pkl")
     print("All 3 models loaded.")
 except FileNotFoundError as e:
     print(f"Warning: {e}")
