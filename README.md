@@ -547,10 +547,10 @@ Covers: 15 components + 4 services — ~400+ tests total.
 ![Landing2](docs/images/landing2.png)
 
 #### Dashboard
-![Dashboard](docs/images/dashboard.png)
+![Dashboard](docs/images/Dashboard.png)
 
 #### Dashboard With notification bar
-![Dashboard](docs/images/dashboard-notification.png)
+![Dashboard](docs/images/Dashboard-notification.png)
 
 #### Events page
 ![Events](docs/images/events.png)
