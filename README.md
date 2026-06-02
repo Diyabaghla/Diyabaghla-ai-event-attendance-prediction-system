@@ -543,37 +543,37 @@ Covers: 15 components + 4 services — ~400+ tests total.
 
 ## Screenshots of project
 #### Landing page
-![Screenshot 2026-06-01 231914.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20231914.png)
-![Screenshot 2026-06-01 231938.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20231938.png)
+![Landing1](docs/images/landing1.png)
+![Landing2](docs/images/landing2.png)
 
 #### Dashboard
-![Screenshot 2026-06-01 232055.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232055.png)
+![Dashboard](docs/images/dashboard.png)
 
 #### Dashboard With notification bar
-![Screenshot 2026-06-01 232117.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232117.png)
+![Dashboard](docs/images/dashboard-notification.png)
 
 #### Events page
-![Screenshot 2026-06-01 232139.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232139.png)
+![Events](docs/images/events.png)
 
 #### Registrations page
-![Screenshot 2026-06-01 232208.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232208.png)
+![Registrations](docs/images/registrations.png)
 
 #### Attendance-prediction 
-![Screenshot 2026-06-01 232321.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232321.png)
+![Attendance-Prediction](docs/images/attendance-prediction.png)
 
 #### No-Show Prediction
-![Screenshot 2026-06-01 232352.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232352.png)
+![No-Show-Prediction](docs/images/no-show-prediction.png)
 
 #### User-Attendance Prediction
-![Screenshot 2026-06-01 232459.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232459.png)
+![User-Attendance-Prediction](docs/images/user-attendance-prediction.png)
 
 #### Resource-planning
-![Screenshot 2026-06-01 232527.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232527.png)
-![Screenshot 2026-06-01 232541.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232541.png)
+![Resource-planning1](docs/images/resource-planning1.png)
+![Resource-planning2](docs/images/resource-planning2.png)
 
 #### Reports
-![Screenshot 2026-06-01 232602.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232602.png)
-![Screenshot 2026-06-01 232629.png](..%2FPictures%2FScreenshots%2FScreenshot%202026-06-01%20232629.png)
+![Report1](docs/images/reports1.png)
+![Reports2](docs/images/reports2.png)
 
 ## 🛠️ Troubleshooting
 
