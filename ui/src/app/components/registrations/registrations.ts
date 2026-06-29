@@ -111,14 +111,34 @@ get upcomingEvents(): Event[] {
     if (this.sortBy !== col) return '↕';
     return this.sortDir === 'asc' ? '↑' : '↓';
   }
+private getEventDate(eventId: number): string | undefined {
+  return this.events.find(e => e.id === eventId)?.eventDate;
+}
 
-  cancel(reg: Registration): void {
-    this.cancellingId = reg.id!;
-    this.regSvc.cancel(reg.id!).subscribe({
-      next: () => { this.cancellingId = null; this.toast.info(`Registration for "${reg.eventTitle}" cancelled.`); this.load(); },
-      error: err => { this.cancellingId = null; this.toast.error(err.error?.message || 'Failed to cancel.'); }
-    });
+isUpcoming(eventId: number): boolean {
+  const dateStr = this.getEventDate(eventId);
+  if (!dateStr) return true; // default to upcoming if unknown — fail safe, not fail open on cancel
+  return new Date(dateStr) >= new Date();
+}
+
+cancel(reg: Registration): void {
+  if (!this.isUpcoming(reg.eventId)) {
+    this.toast.error("This event has already ended — registration can't be cancelled.");
+    return;
   }
+  this.cancellingId = reg.id!;
+  this.regSvc.cancel(reg.id!).subscribe({
+    next: () => {
+      this.cancellingId = null;
+      this.toast.info(`Registration for "${reg.eventTitle}" cancelled.`);
+      this.load();
+    },
+    error: err => {
+      this.cancellingId = null;
+      this.toast.error(err.error?.message || 'Failed to cancel.');
+    }
+  });
+}
 
   openRegister(): void {
     this.selectedEventId = this.events[0]?.id ?? null;
